@@ -14,8 +14,6 @@ use CGI;
 use CGI::Carp('fatalsToBrowser');
 use DBI; 
 use HTML::Template;
-use Dotenv;
-
 use Dotenv -load;
 
 use FatalsToEmail   # only use this when called from the web
