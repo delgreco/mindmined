@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>Books</title>
+<link rel="stylesheet" href="/marcus/books/styles.css" type="text/css" />
+</head>
+<body>
+<table width="100%">
+<tr>
+<td width="70%">
+<h1>Books</h1>
+I call this my "recommended reading" list, but it's really just a list of the books and plays I've read.  This isn't complete, but nowadays when I finish a book I try to add it to this list.  Maybe you will enjoy some of the same books that I have. -<a href="/marcus">Marcus</a></td>
+<td width="15%"></td>
+<td width="15%" align="right"><a href="http://www.mindmined.com"><img src="/images/logo_transparent.gif" border="0"></a></td>
+</tr>
+</table>
+
+<table width="100%"><tr><td valign="bottom"><b>by Author</b></td><td valign="bottom">Title</td><td valign="bottom">Year Written or Published</td><td width="10%" valign="bottom">Genre</td></tr>
+
+<TMPL_LOOP NAME=BOOKS>
+<tr bgcolor="<TMPL_VAR NAME=BGCOLOR>">
+<td bgcolor="#66FFCC"><TMPL_VAR NAME=AUTHOR></td><td><TMPL_VAR NAME=TITLE></td><td><TMPL_VAR NAME=YEAR></td><td><TMPL_VAR NAME=GENRE></td><!-- <TMPL_VAR NAME=ID> <TMPL_VAR NAME=NOTES> -->
+</tr>
+</TMPL_LOOP>
+
+</table>
+
+<br>
+
+</body>
+</html>
+
+
