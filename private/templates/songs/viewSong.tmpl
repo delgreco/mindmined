@@ -1,0 +1,40 @@
+﻿<TMPL_INCLUDE NAME="songsHeader.tmpl">
+
+<div style="float: left;">
+    <p class="title"><TMPL_VAR NAME=TITLE></p>
+    <p class="credits"><TMPL_VAR NAME=CREDITS></p>
+</div>
+
+<div style="float: left;" id="print_button">
+
+</div>
+
+<div style="float: right; text-align: right;" id="textsize_chooser">
+    <span id="audio_url">
+    <TMPL_IF NAME=AUDIO_URL>
+        <a href="<TMPL_VAR NAME=AUDIO_URL>"><img src="/images/icon_sound.gif" border="0" align="absmiddle" hspace="8" alt="listen to a recording of this song"></a>
+    </TMPL_IF>
+    </span>
+    Text Size: 
+    <a href="#" onClick="changeFontSize(12);">&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;</a>
+    <a href="#" onClick="changeFontSize(14);">&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;</a>
+    <a href="#" onClick="changeFontSize(16);">&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;</a>
+    <a href="#" onClick="changeFontSize(20);">&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;</a>
+    <a href="#" onClick="changeFontSize(24);">&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;</a>
+    <br><br>
+    <input type="button" value="print" onClick="printSong();">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/cgi-bin/private/songs.cgi?action=songInterface&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>"><button>edit this song</button></a>
+</div>
+
+
+<div style="clear: both;"></div>
+<br>
+
+<div style="white-space: pre; font-family: monospace;" id="chordsheet"><TMPL_VAR NAME=CHORDSHEET></div>
+
+
+<!-- <TMPL_VAR NAME=MORE_INFO_URL> -->
+
+
+<TMPL_INCLUDE NAME="songsFooter.tmpl">

@@ -1,0 +1,57 @@
+<TMPL_INCLUDE NAME="songsHeader.tmpl">
+
+<TMPL_INCLUDE NAME="songsTop.tmpl">
+
+<center>
+<strong><TMPL_VAR NAME=SONGBOOK> Setlist for <TMPL_VAR NAME=DATE></strong><br><br>
+
+<div id="print_button">
+<input type="button" value="Print" onClick="printSetlist();">
+</div>
+</center>
+
+
+<center>
+<table width="60%">
+
+<form method="post" action="/cgi-bin/private/songs.cgi">
+
+    <TMPL_LOOP NAME=SONGS>
+        <tr>
+        <td align="center">
+        <TMPL_IF NAME=DELETE>
+            <td align="right" nowrap>[<i>never</i>]</td><td><input type="radio" name="id" value="-<TMPL_VAR NAME=ID>"></td>
+        <TMPL_ELSE>
+            <td align="right" nowrap>[<i>less often</i>]</td><td><input type="radio" name="id" value="-<TMPL_VAR NAME=ID>"></td>
+        </TMPL_IF>
+        </td>
+        <td align="center" nowrap>
+        <b><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>"><TMPL_VAR NAME=TITLE></a></b>
+        <font size="-1">(<TMPL_VAR NAME=CREDITS>)</font> ~<font color="red"><TMPL_VAR NAME=FREQUENCY_RATE></font>~
+        </td>
+        <td align="center" nowrap>
+        <input type="radio" name="id" value="+<TMPL_VAR NAME=ID>"> [<i>more often</i>] 
+        </td>
+        </tr>
+    </TMPL_LOOP>
+
+
+    </table>
+    <br>
+    <input type="hidden" name="action" value="adjustFrequency">
+    <input type="hidden" name="setlist" value="<TMPL_VAR NAME=SETLIST>">
+    <input type="hidden" name="songbook_id" value="<TMPL_VAR NAME=SONGBOOK_ID>">
+    <input type="submit" value="Adjust Frequency"><input type="reset" value="Reset">
+    
+</form>
+
+
+</center>
+
+
+
+
+
+
+
+<TMPL_INCLUDE NAME="songsFooter.tmpl">

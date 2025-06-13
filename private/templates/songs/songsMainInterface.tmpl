@@ -1,0 +1,85 @@
+﻿<TMPL_INCLUDE NAME="songsHeader.tmpl">
+
+<TMPL_INCLUDE NAME="songsTop.tmpl">
+
+<script>
+
+function validateAdd() {
+    if ( document.getElementById('song_id').value ) {
+        document.getElementById('add_song_to_songbook').submit();
+    }
+    else {
+        alert('Please select a song.');
+    }
+}
+
+</script>
+
+<TMPL_IF SONGBOOK_ID>
+    <table width="100%">
+    <tr>
+    <td>
+    <img src="/images/book3.gif" hspace="4" align="absmiddle">SongBook: <strong><TMPL_VAR NAME=SONGBOOK></strong>
+    </td>
+    <td align="right">
+    <form id="add_song_to_songbook" method="post" action="/cgi-bin/private/songs.cgi" onSubmit="validateAdd(); return false;">
+    <select id="song_id" name="song_id">
+    <option value="">select song...
+    <TMPL_LOOP SONGS_OPTIONS>
+        <option value="<TMPL_VAR ID>"><TMPL_VAR TITLE>
+    </TMPL_LOOP>
+    </select>
+    <input type="submit" value="Add To This SongBook">
+    <input type="hidden" name="songbook_id" value="<TMPL_VAR SONGBOOK_ID>">
+    <input type="hidden" name="action" value="addToSongBook">
+    </form>
+    </td>
+    </tr>
+    </table>
+</TMPL_IF>
+
+
+<TMPL_IF SONGS>
+
+    <table width="100%">
+        <tr bgcolor="#AAAAAA">
+        <th align="center">Audio</th>
+        <th align="left">Title</th>
+        <th align="left">Credits</th>
+        <th align="center">Edit</th>
+        <th align="center">
+        <TMPL_IF NAME=SONGBOOK_ID>Remove from SongBook
+        <TMPL_ELSE>Delete
+        </TMPL_IF>
+        </th>
+        </tr>
+    
+        <TMPL_LOOP NAME=SONGS>
+            <tr onMouseOver="this.bgColor='#FFFFCC';" onMouseOut="this.bgColor='<TMPL_VAR NAME=BGCOLOR>';" bgcolor="<TMPL_VAR NAME=BGCOLOR>">
+            <td align="center"><TMPL_IF NAME=AUDIO_URL><a href="<TMPL_VAR NAME=AUDIO_URL>"><img src="/images/icon_sound.gif" border="0"></TMPL_IF></td>
+            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" ><TMPL_VAR NAME=TITLE></td>
+            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" ><TMPL_VAR NAME=CREDITS></td>
+            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=songInterface&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>"><img src="/images/pencil.gif" border="0"></a></td>
+            <td align="center">
+            <TMPL_IF NAME=SONGBOOK_ID>
+                <a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=removeFromSongBook&song_id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>" onClick="return window.confirm('Remove this song from the songbook called <TMPL_VAR NAME=SONGBOOK>?')"><img src="/images/delete.gif" border="0"></a>
+            <TMPL_ELSE>
+                <a href="/cgi-bin/private/songs.cgi?action=deleteSong&id=<TMPL_VAR NAME=ID>" onClick="return window.confirm('Delete this song?')"><img src="/images/delete.gif" border="0"></a>
+            </TMPL_IF>
+            </td>
+            <!-- <TMPL_VAR NAME=MORE_INFO_URL> -->
+            </tr>
+        </TMPL_LOOP>
+    
+    </table>
+
+<TMPL_ELSE>
+
+    <p class="message">You haven't yet added a song to this SongBook.</p>
+
+</TMPL_IF>
+
+
+
+
+<TMPL_INCLUDE NAME="songsFooter.tmpl">

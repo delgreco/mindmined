@@ -19,7 +19,7 @@ use Dotenv -load;
 use FatalsToEmail   # only use this when called from the web
   qw(
 	  Mailhost localhost
-	  Address marcus@mindmined.com
+	  Address marcusdelgreco@gmail.com
 	  Error_cache /tmp/books.tmp
 	  Seconds 60
 	  Debug 1

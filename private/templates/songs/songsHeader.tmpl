@@ -1,0 +1,151 @@
+<html>
+<head>
+<title><TMPL_IF NAME=PAGETITLE><TMPL_VAR NAME=PAGETITLE><TMPL_ELSE>Mind Mined SongBook</TMPL_IF></title>
+<style>
+A:link    {color:#000000; text-decoration:none;}
+A:visited {color:#000000; text-decoration:none;}
+A:active  {color:#000000; text-decoration:none;}
+A:hover   {color:#FF3333; text-decoration:underline;}
+
+th {
+    font-weight: bold;
+}
+
+p.message {
+    color: red;
+}
+
+p.title {
+    margin-top: 0cm;
+    margin-bottom: 0cm;
+    line-height: 120%;
+    font-size: 32px;
+}
+p.credits {
+    margin-top: 0cm;
+    margin-bottom: 0cm;
+    line-height: 90%;
+    font-size: 20px;
+}
+
+chordsheet {
+    font-family: Courier New, monospace;
+}
+
+/* Source: http://snipplr.com/view/10979/css-cross-browser-word-wrap */
+.wordwrap { 
+   white-space: pre-wrap;      /* CSS3 */   
+   white-space: -moz-pre-wrap; /* Firefox */    
+   white-space: -pre-wrap;     /* Opera <7 */   
+   white-space: -o-pre-wrap;   /* Opera 7 */    
+   word-wrap: break-word;      /* IE */
+}
+
+
+</style>
+
+<script language="Javascript">
+
+function printSetlist() {
+    var print_button = document.getElementById('print_button');
+    print_button.style.visibility = 'hidden';
+    var songs_top = document.getElementById('songs_top');
+    songs_top.style.visibility = 'hidden';
+    if (window.print) {
+        if (confirm("Print Page?")) {
+            window.print();
+            setTimeout('makeSetlistToolsVisible()', 10000);
+        }
+        else {
+            makeSetlistToolsVisible();
+        }
+    }
+}
+
+function printSong() {
+    var audio_url = document.getElementById('audio_url');
+    audio_url.style.visibility = 'hidden';
+    var print_button = document.getElementById('print_button');
+    print_button.style.visibility = 'hidden';
+    var textsize_chooser = document.getElementById('textsize_chooser');
+    textsize_chooser.style.visibility = 'hidden';
+    if (window.print) {
+        if (confirm("Print Page?")) {
+            window.print();
+            setTimeout('makeSongToolsVisible()', 10000);
+        }
+        else {
+            makeSongToolsVisible();
+        }
+    }
+}
+
+function makeSetlistToolsVisible() {
+    var print_button = document.getElementById('print_button');
+    var songs_top = document.getElementById('songs_top');
+    print_button.style.visibility = 'visible';
+    songs_top.style.visibility = 'visible';
+}
+
+function makeSongToolsVisible() {
+    var audio_url = document.getElementById('audio_url');
+    var print_button = document.getElementById('print_button');
+    var textsize_chooser = document.getElementById('textsize_chooser');
+    audio_url.style.visibility = 'visible';
+    print_button.style.visibility = 'visible';
+    textsize_chooser.style.visibility = 'visible';
+}
+
+function changeFontSize(size) {
+    document.getElementById('chordsheet').style.fontSize = size+'px';
+}
+
+/**
+* Insert a tab at the current text position in a textarea
+* Jan Dittmer, jdittmer@ppp0.net, 2005-05-28
+* Inspired by http://www.forum4designers.com/archive22-2004-9-127735.html
+* Tested on: 
+*   Mozilla Firefox 1.0.3 (Linux)
+*   Mozilla 1.7.8 (Linux)
+*   Epiphany 1.4.8 (Linux)
+*   Internet Explorer 6.0 (Linux)
+* Does not work in: 
+*   Konqueror (no tab inserted, but focus stays)
+*/
+function insertTab(event,obj) {
+    var tabKeyCode = 9;
+    if (event.which) // mozilla
+        var keycode = event.which;
+    else // ie
+        var keycode = event.keyCode;
+    if (keycode == tabKeyCode) {
+        if (event.type == "keydown") {
+            if (obj.setSelectionRange) {
+                // mozilla
+                var s = obj.selectionStart;
+                var e = obj.selectionEnd;
+                obj.value = obj.value.substring(0, s) + 
+                    "\t" + obj.value.substr(e);
+                obj.setSelectionRange(s + 1, s + 1);
+                obj.focus();
+            } else if (obj.createTextRange) {
+                // ie
+                document.selection.createRange().text="\t"
+                obj.onblur = function() { this.focus(); this.onblur = null; };
+            } else {
+                // unsupported browsers
+            }
+        }
+        if (event.returnValue) // ie ?
+            event.returnValue = false;
+        if (event.preventDefault) // dom
+            event.preventDefault();
+        return false; // should work in all browsers
+    }
+    return true;
+}
+
+
+</script>
+
+</head>
