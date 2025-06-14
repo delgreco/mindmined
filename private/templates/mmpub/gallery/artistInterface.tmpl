@@ -1,0 +1,49 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head>
+
+<body>
+
+<font color="red"><TMPL_VAR NAME=MESSAGE></font>
+
+<table width="100%" border="0">
+<tr>
+<td width="40%">
+<a href="http://www.mindmined.com/gallery"><img src="/images/the_mm_gallery.gif" border=0></a><br>
+<br>
+</td>
+<td width="20%"><br></td>
+<td width="36%"></td>
+<td width="4%"> 
+<div align="right">
+<a href="http://www.mindmined.com/"><img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a>
+</div>
+</td>
+</tr>
+</table><br><br>
+<table>
+<td width="50%">
+<form action="<TMPL_VAR NAME=SCRIPT_NAME>" enctype='multipart/form-data' METHOD="POST">
+
+Enter the <b>name</b> of the new artist<br><br>
+
+<b>First:</b> <input type="text" size=40 name="first_name" value="<TMPL_VAR NAME=FIRST_NAME>">&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Last:</b> <input type="text" size="40" name="last_name" value="<TMPL_VAR NAME=LAST_NAME>"><br><br>
+
+<b>Email Address</b> of the artist (if any): <input type="text" size="20" name="email" value="<TMPL_VAR NAME=EMAIL>"><br><br>
+
+<b>Homesite</b> of the artist (if any): <input type="text" size="50" name="homesite" value="<TMPL_VAR NAME=HOMESITE>"><br><br>
+
+<b>Directory Name</b> in which to store the artist's files: <input type="text" size="20" name="dir" value="<TMPL_VAR NAME=DIR>"><br><br>
+
+<b>Bio</b> for the artist:<br>
+
+<textarea name="bio" cols="40" rows="8"><TMPL_VAR NAME=BIO></textarea>
+<br>
+<br>
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="hidden" name="action" value="saveArtist">
+<input type="submit" value="<TMPL_VAR NAME=ADD_OR_UPDATE> Artist">
+</form>
+<br>
+<br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

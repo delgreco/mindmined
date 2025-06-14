@@ -63,12 +63,12 @@ sub addToSongBook {
     #my $song_id = $_[0];
     #my $songbook_id = $_[1];
     # make sure it's not already there for some strange reason
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT song_id 
     FROM songs_songbooks
     WHERE song_id = ?
     AND songbook_id = ?
-SQL
+    SQL
     my $sth = $dbh->prepare($select);
     $sth->execute($song_id, $songbook_id);
     my ($id) = $sth->fetchrow_array();

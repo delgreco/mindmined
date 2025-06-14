@@ -1,0 +1,45 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<table width="100%" border="0">
+<tr>
+<td width="40%"><a href="/gallery"><img src="/images/the_mm_gallery.gif" border=0></a><br>
+</font>
+<br>
+</td>
+<td width="20%">
+<br>
+</td>
+<td width="36%"></td>
+<td width="4%"> 
+<div align="right"><a href="/weblog/mmpublisher/"><img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a></div>
+</td>
+</tr>
+</table>
+<p> 
+<p> 
+<table>
+<td width="50%">
+<form action="<TMPL_VAR NAME=SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+<b>Title</b> of the new image<br>
+<input type="text" size="70" name="title" value="<TMPL_VAR NAME=TITLE>">
+<p> 
+<b>Image URL</b><br>
+<input name="url" type="text" value="<TMPL_IF NAME=URL><TMPL_VAR NAME=URL><TMPL_ELSE>http://www.mindmined.com/gallery/</TMPL_IF>" size="75"><br><br>
+<b>Description</b> of the image (if any)<br>
+<textarea name="description" rows="8" cols="40"><TMPL_VAR NAME=DESCRIPTION></textarea><br><br>
+<b>Year</b> image was posted: <input type="text" size="4" name="year" value="<TMPL_VAR NAME=YEAR>"><br><br>
+<select name="artist_id">
+<option value="whoops" SELECTED>choose artist...
+<TMPL_LOOP NAME=ARTIST_OPTIONS>
+<option value="<TMPL_VAR NAME=ARTIST_ID>" <TMPL_VAR NAME=SELECTED>><TMPL_VAR NAME=FIRST_NAME> <TMPL_VAR NAME=LAST_NAME>
+</TMPL_LOOP>
+</select>
+<br><br> 
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="hidden" name="action" value="saveImage">
+<input type="submit" value="Save">
+</form>
+<br><br><br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

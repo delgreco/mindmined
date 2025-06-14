@@ -11,18 +11,17 @@ use lib qw(
 );
 
 use CGI;
-use CGI::Carp('fatalsToBrowser');
 use DBI; 
 use HTML::Template;
 use Dotenv -load;
 
-use FatalsToEmail   # only use this when called from the web
+use FatalsToEmail
   qw(
 	  Mailhost localhost
 	  Address marcusdelgreco@gmail.com
 	  Error_cache /tmp/books.tmp
 	  Seconds 60
-	  Debug 1
+	  Debug 0
 	);  
 
 my $cgiobject = new CGI;
