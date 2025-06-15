@@ -1,0 +1,58 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+
+<hr>
+<TMPL_VAR NAME=FIRST_NAME> <TMPL_VAR NAME=LAST_NAME><br>
+<TMPL_IF NAME=STREET><TMPL_VAR NAME=STREET><br></TMPL_IF>
+<TMPL_IF NAME=ADDRESS><TMPL_VAR NAME=ADDRESS><br></TMPL_IF>
+<TMPL_IF NAME=EMAIL><a href="mailto:<TMPL_VAR NAME=EMAIL>"><TMPL_VAR NAME=EMAIL></a><br></TMPL_IF>
+<TMPL_IF NAME=HOME_PHONE>Home Phone: <TMPL_VAR NAME=HOME_PHONE><br></TMPL_IF>
+<TMPL_IF NAME=BUSINESS_PHONE>Business Phone: <TMPL_VAR NAME=BUSINESS_PHONE><br></TMPL_IF>
+<TMPL_IF NAME=CELLPHONE>Cellphone: <TMPL_VAR NAME=CELLPHONE><br></TMPL_IF>
+<TMPL_IF NAME=NOTES>Notes: <TMPL_VAR NAME=NOTES></TMPL_IF>
+<hr>
+
+<form action="<TMPL_VAR NAME=SCRIPT_NAME>" enctype='multipart/form-data' method="POST">
+<b>Last Name</b> or <b>Organization Name</b>: <input type="text" size="30" name="last_name" value="<TMPL_VAR NAME=LAST_NAME>">
+&nbsp;&nbsp;&nbsp;&nbsp;
+<b>First name(s)</b>: <input type="text" size="30" name="first_name" value="<TMPL_VAR NAME=FIRST_NAME>"><br><br>
+
+<b>Home Phone</b>: <input type="text" size="15" name="home_phone" value="<TMPL_VAR NAME=HOME_PHONE>">&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Business Phone</b>: <input type="text" size="15" name="business_phone" value="<TMPL_VAR NAME=BUSINESS_PHONE>">&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Cellphone</b>: <input type="text" size="15" name="cellphone" value="<TMPL_VAR NAME=CELLPHONE>"><br><br>
+
+<b>Street or Box</b>: <input type="text" size="35" name="street" value="<TMPL_VAR STREET>">&nbsp;&nbsp;&nbsp;&nbsp;
+<b>City</b>: <input type="text" size="20" name="city" value="<TMPL_VAR CITY>">
+&nbsp;&nbsp;&nbsp;&nbsp;
+<b>State</b>: <input type="text" size="4" name="state" value="<TMPL_VAR STATE>">
+&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Zip Code</b>: <input type="text" size="10" NAME="zip" value="<TMPL_VAR ZIP>">
+<br><br>
+
+<b>Email</b>: <input type="text" size="25" name="email" value="<TMPL_VAR EMAIL>">
+<br><br>
+
+<b>Notes</b>: <input type="text" size="75" name="notes" value="<TMPL_VAR NOTES>">
+
+<p>
+<select name="client_id"><option value="" SELECTED>associate to client...?
+<TMPL_LOOP CLIENT_OPTIONS>
+    <option value="<TMPL_VAR CLIENT_ID>" <TMPL_IF PRODUCER>SELECTED</TMPL_IF>><TMPL_VAR NAME=CLIENT_NAME>
+</TMPL_LOOP>
+</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<input type="checkbox" name="producer" <TMPL_IF NAME=PRODUCER>CHECKED</TMPL_IF>> Producer (has items for sale in the Store)
+<br><br>
+
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="hidden" name="action" value="saveContact">
+<input type="submit" value="Save Contact">
+</b>
+</form>
+
+<br><br><br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

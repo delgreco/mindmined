@@ -1,0 +1,36 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+
+<table width="100%">
+<tr bgcolor="#CCCCCC"><td><b><a href="<TMPL_VAR NAME=SCRIPT_NAME>?order_by=last_name">Last Name</a> (or Organization)</b></td>
+<td><b><a href="<TMPL_VAR NAME=SCRIPT_NAME>?order_by=first_name">First Name</a></b></td>
+<td><b>Home Phone</b></td>
+<td><b>Business Phone</b></td>
+<td><b>Cellphone</b></td>
+<td><b>Email</b></td>
+<td align="center"><b>Delete</b></td>
+</tr>
+
+<TMPL_LOOP NAME=CONTACTS>
+<tr onMouseOver="this.bgColor='#CC9966';" onMouseOut="this.bgColor='<TMPL_VAR NAME=BGCOLOR>';" onClick="javascript:document.location='<TMPL_VAR NAME=SCRIPT_NAME>?action=contactInterface&id=<TMPL_VAR NAME=ID>';" bgcolor="<TMPL_VAR NAME=BGCOLOR>">
+<td nowrap><TMPL_VAR NAME=LAST_NAME></td>
+<td><TMPL_VAR NAME=FIRST_NAME></td>
+<td><TMPL_VAR NAME=HOME_PHONE></td>
+<td><TMPL_VAR NAME=BUSINESS_PHONE></td>
+<td><TMPL_VAR NAME=CELLPHONE></td>
+<td><a href="mailto:<TMPL_VAR NAME=EMAIL>"><TMPL_VAR NAME=EMAIL></a></td>
+<td align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=deleteContact&id=<TMPL_VAR NAME=ID>" onClick="return window.confirm('Delete this contact?')"><img src="/images/delete.gif" border="0"></a></td>
+</tr>
+</TMPL_LOOP>
+
+</table>
+<br>
+<br>
+<br>
+<br>
+
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
