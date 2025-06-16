@@ -1,0 +1,22 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head>
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<body>
+
+<h2>Update <TMPL_VAR NAME=PAGETITLE></h2>
+
+<form action="<TMPL_VAR NAME=SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+
+<input type="file" name="body"<br><br>
+
+<b>HTML source:</b> <input type="file" name="body" size="75">
+
+<br><br>
+
+<input type="hidden" name="action" value="saveBody">
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="submit" value="Update Title with New Content">
+</form>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

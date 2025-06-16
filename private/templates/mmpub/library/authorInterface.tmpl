@@ -1,0 +1,32 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+
+<b>First Name:</b> <input type="text" size="25" name="first_name" value="<TMPL_VAR FIRST_NAME>"> &nbsp;&nbsp;
+<b>Last Name:</b> <input type="text" size="25" name="last_name" value="<TMPL_VAR LAST_NAME>"> &nbsp;&nbsp;
+<input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published <br><br>
+
+<b>Email:</b> <input type="text" name="email" size="35" value="<TMPL_VAR EMAIL>"><br><br>
+
+<b>Alternate Email(s) [comma delimited please]:</b> <input type="text" name="alt_emails" size="45" value="<TMPL_VAR ALT_EMAILS>"><br><br>
+
+<b>Email Display:</b> <input type="radio" name="email_display" value="mailto" <TMPL_IF MAILTO>CHECKED</TMPL_IF>> mailto: &nbsp;&nbsp;&nbsp;<input type="radio" name="email_display" value="obfuscated" <TMPL_IF OBFUSCATED>CHECKED</TMPL_IF>> obfuscated<br><br>
+
+<b>Homesite:</b> <input type="text" name="homesite" size="50" value="<TMPL_VAR HOMESITE>"><br><br>
+
+<b>Bio:</b><br> 
+
+<textarea name="bio" cols="80" rows="8"><TMPL_VAR BIO></textarea>
+
+<br><br> 
+
+<input type="hidden" name="action" value="saveAuthor">
+<input type="hidden" name="id" value="<TMPL_VAR ID>">
+<input type="submit" value="Save Author">
+</form>
+
+<br><br><br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

@@ -56,7 +56,7 @@ TODO
 
 sub artistInterface {
     my $id=$cgiobject->param('id');
-    my $template = HTML::Template->new(filename => "templates/mmpub/gallery/artistInterface.tmpl");
+    my $t = HTML::Template->new(filename => "templates/mmpub/gallery/artistInterface.tmpl");
     my $first_name; my $last_name; my $email;
     my $homesite; my $dir; my $bio;
     my $add_or_update;
@@ -74,15 +74,15 @@ sub artistInterface {
     else {
         $add_or_update = 'Add';
     }
-    $template->param(ADD_OR_UPDATE => $add_or_update);
-    $template->param(FIRST_NAME => $first_name);
-    $template->param(LAST_NAME => $last_name);
-    $template->param(EMAIL => $email);
-    $template->param(HOMESITE => $homesite);
-    $template->param(DIR => $dir);
-    $template->param(BIO => $bio);
-    $template->param(ID => $id);
-    return ($template, $message);
+    $t->param(ADD_OR_UPDATE => $add_or_update);
+    $t->param(FIRST_NAME => $first_name);
+    $t->param(LAST_NAME => $last_name);
+    $t->param(EMAIL => $email);
+    $t->param(HOMESITE => $homesite);
+    $t->param(DIR => $dir);
+    $t->param(BIO => $bio);
+    $t->param(ID => $id);
+    return ($t, $message);
 }
 
 =head2 batchPublish()

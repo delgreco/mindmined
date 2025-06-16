@@ -1,0 +1,60 @@
+﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+
+<table width="500">
+<tr>
+<td>
+<h2><TMPL_VAR ADD_OR_UPDATE> Title</h2>
+</td>
+<td>
+<input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published
+</td>
+</tr>
+</table>
+
+<select name="author_id">
+<option value="">select author...
+<TMPL_LOOP AUTHOR_OPTIONS>
+    <option value="<TMPL_VAR AUTHOR_ID>" <TMPL_VAR SELECTED>><TMPL_VAR LAST_NAME>, <TMPL_VAR FIRST_NAME>
+</TMPL_LOOP>
+</select>&nbsp;&nbsp;&nbsp;
+<b>Title:</b> <input type="text" size="75" name="pagetitle" value="<TMPL_VAR PAGETITLE>"><br><br>
+<b>Filename:</b> <input type="text" size="65" name="filename" value="<TMPL_VAR FILENAME>">&nbsp;&nbsp;&nbsp;
+<select name="genre">
+<option value="">select genre...
+<TMPL_LOOP GENRE_OPTIONS>
+    <option value="<TMPL_VAR GENRE>" <TMPL_VAR SELECTED>><TMPL_VAR GENRE>
+</TMPL_LOOP>
+</select>&nbsp;&nbsp;&nbsp;<b>Year:</b> <input type="text" name="year" value="<TMPL_VAR YEAR>" size="4" maxlength="4"><br><br>
+<b>Description:</b> <input type="text" name="description" size="95" value="<TMPL_VAR DESCRIPTION>" maxlength="255"><br><br>
+<b>Image URL:</b> <input type="text" name="image_URL" size="75" value="<TMPL_IF IMAGE_URL><TMPL_VAR IMAGE_URL><TMPL_ELSE>/library-images/</TMPL_IF>"><br><br>
+<b>Image Alt Text:</b> <input type="text" name="image_alt_text" size="50" value="<TMPL_VAR IMAGE_ALT_TEXT>"><br><br>
+<b>Keywords:</b> <input type="text" name="keywords" value="<TMPL_VAR KEYWORDS>" size="100"><br><br>
+<TMPL_IF ID>
+<TMPL_ELSE>
+    <b>HTML source:</b> <input type="file" name="body" size="75"><br><br>
+</TMPL_IF>
+<input type="hidden" name="action" value="saveTitle">
+<input type="hidden" name="id" value="<TMPL_VAR ID>">
+<input type="submit" value="<TMPL_VAR ADD_OR_UPDATE> Title">
+</form>
+<br>
+<hr>
+<TMPL_IF ID>
+    <h2>Update Body of This Title</h2>
+    <form method="post" action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data'>
+    <b>HTML source:</b> <input type="file" name="body" size="50">
+    <input type="hidden" name="id" value="<TMPL_VAR ID>">
+    <input type="hidden" name="action" value="updateBody"><br><br>
+    <input type="submit" value="Update Title">
+    </form>
+</TMPL_IF>
+<br>
+<br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
+

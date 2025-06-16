@@ -157,7 +157,6 @@ sub mainInterface {
     ON songbooks.id = songs_songbooks.songbook_id
     $where
     GROUP BY title, credits, more_info_url, audio_url, chordsheet, songs.id
-
     ORDER BY title
     SQL
     my $sth = $dbh->prepare($select);
@@ -191,7 +190,7 @@ sub mainInterface {
         songbook_id => $songbook_id,
     );
     # populate songs dropdown
-    $t = _getAddSongsDropdown($template, $songbook_id); 
+    $t = _getAddSongsDropdown($t, $songbook_id); 
     # get the SongBook name
     my $songbook = _getSongBookName($songbook_id);
     $t->param(SONGBOOK => $songbook);
