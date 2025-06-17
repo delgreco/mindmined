@@ -1,0 +1,84 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<font color="red"><TMPL_VAR NAME=MESSAGE></font>
+
+<table width="100%">
+<tr>
+<td><a href="<TMPL_VAR NAME=SCRIPT_NAME>"><img src="/images/business_manager.gif" border="0"></a><br>
+<h3><TMPL_VAR NAME=NAME> (acct #<font color="red"><TMPL_VAR NAME=CLIENT_ID></font>)</h3>
+Website: <a href="<TMPL_VAR NAME=WEBSITE>"><TMPL_VAR NAME=WEBSITE></a><br><br>
+
+<table width="90%">
+<tr>
+<td>
+<h3><img src="/images/pad.gif" height="30" width="30" border="0" hspace="5" vspace="5" align="absmiddle">Notes</h3>
+</td>
+<td align="right">
+<a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=noteInterface&client_id=<TMPL_VAR NAME=CLIENT_ID>"><img src="/images/plus_transparent.gif" border="0" hspace="5" vspace="5" align="absmiddle">Add note</a>
+</td>
+</tr>
+</table>
+
+<table width="90%">
+<tr bgcolor="#99CCFF"><td><b>Date Added</b></td><td><b>Note</b></td><td><b>Edit</b></td><td><b>Delete</b></td></tr>
+
+<TMPL_LOOP NAME=NOTES>
+<tr $color>
+<td valign="top" nowrap><TMPL_VAR NAME=DATE_ADDED></td>
+<td valign="top"><TMPL_VAR NAME=NOTE></a></td>
+<td align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=noteInterface&id=<TMPL_VAR NAME=NOTE_ID>"><img src="/images/pencil.gif" border="0"></a></td>
+<td align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=deleteNote&id=<TMPL_VAR NAME=NOTE_ID>" onClick="return window.confirm('Delete this note?')"><img src="/images/delete.gif" border="0"></a></td>
+</TMPL_LOOP>
+
+</table>
+
+<br><br>
+<a href="/cgi-bin/mmpublisher/private/reminder.cgi?action=reminderInterface1&account_number=<TMPL_VAR NAME=CLIENT_ID>">
+<img src="/images/reminder.gif" hspace="5" vspace="5" border="0" align="absmiddle">Set reminder</a><br>
+<table width="70%" bgcolor="#CACACA" cellpadding="4">
+<tr>
+<td>
+
+<TMPL_IF NAME=REMINDERS>
+<b>Reminders:</b><br>
+<ul>
+<TMPL_LOOP NAME=REMINDERS>
+<li><TMPL_VAR NAME=REMINDER_TYPE> reminder for <TMPL_VAR NAME=EMAIL>: <a href="/cgi-bin/mmpublisher/private/reminder.cgi?action=reminderInterface&id=<TMPL_VAR NAME=ID>"><b><TMPL_VAR NAME=REMINDER></b></a></li>
+</TMPL_LOOP>
+</ul>
+<TMPL_ELSE>
+No reminders set for this account.
+</TMPL_IF>
+
+</td>
+</tr>
+</table><br>
+<br><br>
+</td>
+<td valign="top" width="30%">
+<table width="100%" cellpadding="4">
+<tr>
+<td bgcolor="#CACACA" align="right"><b>Contacts for <TMPL_VAR NAME=NAME>:</b><br><br>
+<TMPL_LOOP NAME=CONTACTS>
+<b><TMPL_VAR NAME=FIRST_NAME> <TMPL_VAR NAME=LAST_NAME></b><br>
+<TMPL_IF NAME=EMAIL><a href="mailto:<TMPL_VAR NAME=EMAIL>"><TMPL_VAR NAME=EMAIL></a><br></TMPL_IF>
+<TMPL_IF NAME=HOME_PHONE>home phone: <TMPL_VAR NAME=HOME_PHONE></a><br></TMPL_IF>
+<TMPL_IF NAME=BUSINESS_PHONE>business phone: <TMPL_VAR NAME=BUSINESS_PHONE></a><br></TMPL_IF>
+<TMPL_IF NAME=CELLPHONE>cellphone: <TMPL_VAR NAME=CELLPHONE></a><br></TMPL_IF>
+<br>
+<TMPL_IF NAME=STREET><TMPL_VAR NAME=STREET></TMPL_IF>
+<TMPL_IF NAME=CITY><TMPL_VAR NAME=CITY>, <TMPL_VAR NAME=STATE><br></TMPL_IF>
+<TMPL_IF NAME=ZIP><TMPL_VAR NAME=ZIP><br></TMPL_IF>
+<br><a href="/cgi-bin/mmpublisher/private/contacts.cgi?action=contactInterface&id=<TMPL_VAR NAME=CONTACT_ID>">edit this contact</a><br>
+<hr>
+</TMPL_LOOP>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

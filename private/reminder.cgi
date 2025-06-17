@@ -645,15 +645,20 @@ sub weeklyReminders {
     }
 }
 
-######
-# yearly reminders
-######
+=head2 yearly reminders
+
+TODO
+
+=cut
+
 sub yearlyReminders {
-    my $select="SELECT email, reminder, account_number, reminder_type, id 
+    my $select = <<~"SQL";
+    SELECT email, reminder, account_number, reminder_type, id 
     FROM reminders 
     WHERE reminder_type = 'yearly' 
     AND trigger_day = DAYOFMONTH(NOW()) 
-    AND trigger_month = MONTHNAME(NOW())";
+    AND trigger_month = MONTHNAME(NOW())
+    SQL
     my $sth = $dbh->prepare($select);
     $sth->execute();
     while (my ($recipient, $reminder, $account_number, $reminder_type, $id) = $sth->fetchrow_array()) {

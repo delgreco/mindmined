@@ -1,0 +1,37 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<font color="red"><TMPL_VAR NAME=MESSAGE></font>
+
+<table width="100%" border="0">
+<tr>
+<td width="40%"><font size=3 face="Arial"><img src="/images/business_manager.gif" border="0"><br>
+<br>
+</td>
+<td width="20%">
+<br>
+</td>
+<td width="36%">
+</font></td>
+<td width="4%"> 
+<div align="right"><a href="/weblog/mmpublisher/"><img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a></div>
+</td>
+</tr>
+</table>
+<h2>Save Note</h2>
+<form method="post" action="<TMPL_VAR NAME=SCRIPT_NAME>"> 
+<b>Client:</b> <select name="client_id"><option value="">choose client... 
+<TMPL_LOOP NAME=CLIENT_OPTIONS>
+<option value="<TMPL_VAR NAME=ID>" <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=NAME>
+</TMPL_LOOP>
+</select> <br><br>
+<textarea rows="8" cols="40" name="note"><TMPL_VAR NAME=NOTE></textarea>
+<br><br>
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="hidden" name="action" value="saveNote">
+<input type="submit" value="Save">
+</form>
+<br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
