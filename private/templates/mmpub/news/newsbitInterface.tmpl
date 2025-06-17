@@ -1,0 +1,36 @@
+﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<body background="white">
+
+<h2>Edit This Newsbit</h2>
+<br>
+
+<TMPL_VAR DATETIME><br><br>
+
+<form method="post" action="<TMPL_VAR SCRIPT_NAME>">
+
+<TMPL_LOOP CATEGORIES>
+    <input type="radio" name="category" value="<TMPL_VAR CATEGORY>" <TMPL_VAR CHECKED>><TMPL_VAR CATEGORY>&nbsp;&nbsp;&nbsp;
+</TMPL_LOOP>
+<br><br>
+
+Title: <input maxlength="255" size="50" type="text" name="title" value="<TMPL_VAR TITLE ESCAPE=HTML>" size="75"> &nbsp;&nbsp;&nbsp;
+
+<input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published
+
+<br><br>
+
+Newsbit URL: <input maxlength="255" type="text" name="newsbit_URL" value="<TMPL_VAR NEWSBIT_URL>" size="100"><br><br>
+
+Newsbit Image URL: <input maxlength="255" type="text" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
+
+<textarea name="newsbit" style="width: 80%; height: 450px;"><TMPL_VAR NEWSBIT></textarea><br><br>
+
+<input type="hidden" name="id" value="<TMPL_VAR ID>">
+<input type="hidden" name="action" value="saveNewsbit">
+<input type="submit" value="<TMPL_VAR ADD_OR_UPDATE> Newsbit">
+</form>
+<br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

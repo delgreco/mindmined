@@ -1,0 +1,14 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<body background="white">
+<h2>Edit This Newsletter</h2><br>
+<form method="post" action="<TMPL_VAR NAME=SCRIPT_NAME>">
+<textarea name="newsbit" cols="50" rows="60"><TMPL_VAR NAME=BODY></textarea><br><br>
+<input type="hidden" name="number" value="<TMPL_VAR NAME=NUMBER>">
+<input type="hidden" name="action" value="saveNewsletter">
+<input type="submit" value="Update Newsletter">
+</form><br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
