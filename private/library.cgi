@@ -172,11 +172,12 @@ sub bodyInterface {
     my $id=$cgiobject->param('id');
     my $template = HTML::Template->new(filename => "templates/mmpub/library/bodyInterface.tmpl");
     # get pagetitle
-    my $select="SELECT pagetitle 
-    FROM titles 
-    WHERE id = ?";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($id) || die "execute: $select: $DBI::errstr";
+    my $select = <<~"SQL";
+    SELECT pagetitle FROM titles 
+    WHERE id = ?
+    SQL
+    my $sth = $dbh->prepare($select);
+    $sth->execute($id);
     my ($pagetitle) = $sth->fetchrow_array();
     $template->param(PAGETITLE => $pagetitle);
     $template->param(ID => $id);

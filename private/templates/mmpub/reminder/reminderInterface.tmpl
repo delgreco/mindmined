@@ -1,0 +1,119 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<script language="Javascript">
+
+function showDayOfMonthOptions() {
+	document.getElementById('dayofmonth_options').innerHTML = "<br><br>On which <b>day</b> of the month?&nbsp;&nbsp;<select name='trigger_day'><option value=''>select day...<TMPL_LOOP NAME=DAYOFMONTH_OPTIONS><option value='<TMPL_VAR NAME=DAY>' <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=DAY></TMPL_LOOP></select>";
+}
+
+function hideDayOfMonthOptions() {
+	document.getElementById('dayofmonth_options').innerHTML = "";
+}
+
+function showDayOfWeekOptions() {
+	document.getElementById('dayofweek_options').innerHTML = "<br><br>On which <b>day</b> should this reminder be sent?&nbsp;&nbsp;<select name='trigger_weekday'><TMPL_LOOP DAYOFWEEK_OPTIONS><option value='<TMPL_VAR NAME=DAYOFWEEK_NUM>' <TMPL_IF NAME=SELECTED>SELECTED></TMPL_IF>><TMPL_VAR NAME=DAYOFWEEK></TMPL_LOOP>";
+}
+
+function hideDayOfWeekOptions() {
+	document.getElementById('dayofweek_options').innerHTML = "";
+}
+
+function showMonthOptions() {
+	document.getElementById('month_options').innerHTML = "<br><br>On which <b>month</b> should this reminder be sent?&nbsp;&nbsp;<select name='trigger_month'><TMPL_LOOP MONTH_OPTIONS><option value='<TMPL_VAR NAME=MONTH>' <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=MONTH></TMPL_LOOP>";
+}
+
+function hideMonthOptions() {
+	document.getElementById('month_options').innerHTML = "";
+}
+
+function showYearPrompt() {
+	document.getElementById('year_prompt').innerHTML = "<br><br><b>Year:</b> <input type='text' name='trigger_year' value='<TMPL_VAR NAME=YEAR>' size='4'>";
+}
+
+function hideYearPrompt() {
+	document.getElementById('year_prompt').innerHTML = "";
+}
+
+function toggleReminderOptions() {
+	if (document.choose.reminder_type[0].checked) {
+		showDayOfMonthOptions();
+		showMonthOptions();
+		showYearPrompt();
+		hideDayOfWeekOptions();
+	}
+	else if (document.choose.reminder_type[1].checked) {  // yearly
+		showDayOfMonthOptions();
+		showMonthOptions();
+		hideYearPrompt();
+		hideDayOfWeekOptions();
+	}
+	else if (document.choose.reminder_type[2].checked) { // monthly
+		showDayOfMonthOptions();
+		hideMonthOptions();
+		hideYearPrompt();
+		hideDayOfWeekOptions();
+	}
+	else if (document.choose.reminder_type[3].checked) { // weekly
+		hideDayOfMonthOptions();
+		hideMonthOptions();
+		hideYearPrompt();
+		showDayOfWeekOptions();
+	}
+	else  {
+		hideDayOfMonthOptions();
+		hideMonthOptions();
+		hideYearPrompt();
+		hideDayOfWeekOptions();
+	}
+}
+
+
+</script>
+
+<body onLoad="toggleReminderOptions();">
+
+<font color="red"><TMPL_VAR NAME=MESSAGE></font>
+
+<h2><img src="/images/reminder.gif" border="0" hspace="5" vspace="5" align="absmiddle">Save Reminder</h2><br>
+
+<form name="choose" action="<TMPL_VAR NAME=SCRIPT_NAME>" method="post">
+<TMPL_LOOP NAME=REMINDER_TYPES>
+<input onClick="toggleReminderOptions();" type="radio" name="reminder_type" value="<TMPL_VAR NAME=TYPE>" <TMPL_IF NAME=CHECKED>CHECKED</TMPL_IF>><TMPL_VAR NAME=TYPE>&nbsp;&nbsp;&nbsp;
+</TMPL_LOOP>
+<br><br><br>
+<select name="email">
+<option value="whoops" selected>select remindee...
+<TMPL_LOOP NAME=EMAIL_OPTIONS>
+<option value="<TMPL_VAR NAME=EMAIL>" <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=EMAIL>
+</TMPL_LOOP>
+</select>
+<br><br>
+<select name="account_number"><option value="">associate to client?
+<TMPL_LOOP NAME=CLIENT_OPTIONS>
+<option value="<TMPL_VAR NAME=ID>" <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=CLIENT>
+</TMPL_LOOP>
+</select>
+<br><br>
+
+Enter the <b>reminder</b> to be sent:<br>
+<textarea name="reminder" cols="60" rows="5"><TMPL_VAR NAME=REMINDER></textarea>
+
+<div id="month_options"></div>
+<div id="dayofmonth_options"></div>
+<div id="dayofweek_options"></div>
+<div id="year_prompt"></div>
+
+<br>
+
+<input type="hidden" name="action" value="saveReminder">
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="submit" value="Save">
+</form>
+
+<br><br>
+</center>
+		
+		
+		
+<TMPL_INCLUDE NAME="../bottom.tmpl">
+

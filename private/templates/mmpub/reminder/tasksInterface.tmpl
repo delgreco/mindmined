@@ -1,0 +1,51 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl">
+
+<style>
+
+#bigType { font-size: 26px; }
+
+</style>
+
+</head>
+<body>
+
+<TMPL_INCLUDE NAME="reminder_top.tmpl">
+
+<table align="center" width="50%">
+<tr>
+<td align="center">
+<a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=remindersInterface">View Reminders</a>
+</td>
+</tr>
+</table>
+
+
+<TMPL_IF NAME=MESSAGE>
+<center>
+<font color="red"><TMPL_VAR NAME=MESSAGE></font></TMPL_IF>
+</center>
+
+<div class="bigType">
+
+<table align="center" width="50%">
+<tr bgcolor="#66CCFF">
+<td><strong>Task</strong></td>
+<td align="center"><strong>Delete</strong></td>
+</tr>
+
+<TMPL_LOOP NAME=TASKS>
+<tr onMouseOver="this.bgColor='<TMPL_VAR NAME=MOUSEOVER_BGCOLOR>';" onMouseOut="this.bgColor='<TMPL_VAR NAME=BGCOLOR>';" bgcolor="<TMPL_VAR NAME=BGCOLOR>">
+<td onClick="javascript:document.location='<TMPL_VAR NAME=SCRIPT_NAME>?action=taskInterface&id=<TMPL_VAR NAME=ID>';" valign="top"><b><TMPL_VAR NAME=TASK></b></td>
+<td valign="top" align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=deleteTask&id=<TMPL_VAR NAME=ID>" onClick="return window.confirm('Delete this task?')"><img src="/images/delete.gif" border="0"></a></td>
+</tr>
+</TMPL_LOOP>
+
+</table>
+
+
+</div>
+
+<br><br><br><br><br><br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
+

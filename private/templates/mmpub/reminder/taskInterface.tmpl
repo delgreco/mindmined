@@ -1,0 +1,41 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+<script language="Javascript">
+
+
+</script>
+
+<body>
+
+<font color="red"><TMPL_VAR NAME=MESSAGE></font>
+
+<h2>
+<img src="/images/reminder2.gif" border="0" hspace="5" vspace="5" align="absmiddle">Task
+</h2>
+
+<br>
+<form name="choose" action="<TMPL_VAR NAME=SCRIPT_NAME>" method="post">
+
+<strong>Task:</strong> <input type="text" name="task" size="75" maxlength="255" value="<TMPL_VAR NAME=TASK>">
+<br><br>
+
+<strong>Status:</strong> <select name="status">
+<TMPL_LOOP NAME=STATUSES_DROPDOWN>
+<option value="<TMPL_VAR NAME=STATUS>" <TMPL_IF NAME=SELECTED>SELECTED</TMPL_IF>><TMPL_VAR NAME=STATUS>
+</TMPL_LOOP>
+</select>
+
+<br><br>
+
+
+<input type="hidden" name="action" value="saveTask">
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="submit" value="Save">
+</form>
+<br><br>
+</center>
+		
+		
+		
+<TMPL_INCLUDE NAME="../bottom.tmpl">
+

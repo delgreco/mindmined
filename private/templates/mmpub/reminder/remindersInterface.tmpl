@@ -1,0 +1,46 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+
+
+<TMPL_IF NAME=MESSAGE><font color="red"><TMPL_VAR NAME=MESSAGE></font></TMPL_IF>
+
+
+<TMPL_INCLUDE NAME="reminder_top.tmpl">
+
+
+<table align="center" width="70%">
+<tr>
+<td align="center">
+<a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=tasksInterface">View Tasks</a>
+</td>
+</tr>
+</table>
+
+
+
+
+<TMPL_IF NAME=SHOW_ALL_LINK><a href="<TMPL_VAR NAME=SCRIPT_NAME>">Show All</a></TMPL_IF>
+
+
+<table align="center" width="70%">
+<tr bgcolor="#66CCFF">
+<td><strong>Reminder</strong></td>
+<td><strong>Recipient</strong></td>
+<td><strong>Schedule</strong></td>
+<td align="center"><strong>Delete</strong></td>
+</tr>
+
+<TMPL_LOOP NAME=REMINDERS>
+<tr onMouseOver="this.bgColor='<TMPL_VAR NAME=MOUSEOVER_BGCOLOR>';" onMouseOut="this.bgColor='<TMPL_VAR NAME=BGCOLOR>';" onClick="javascript:document.location='<TMPL_VAR NAME=SCRIPT_NAME>?action=reminderInterface&id=<TMPL_VAR NAME=ID>';" bgcolor="<TMPL_VAR NAME=BGCOLOR>">
+<td valign="top"><b><TMPL_VAR NAME=REMINDER></b></td>
+<td valign="top"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?email=<TMPL_VAR NAME=EMAIL>"><b><TMPL_VAR NAME=EMAIL></b></a></td>
+<td valign="top" nowrap><b><TMPL_VAR NAME=SCHEDULE></b></td>
+<td valign="top" align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=deleteReminder&id=<TMPL_VAR NAME=ID>" onClick="return window.confirm('Delete this reminder?')"><img src="/images/delete.gif" border="0"></a></td>
+</tr>
+</TMPL_LOOP>
+
+</table>
+
+<br><br><br>
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
+
