@@ -1,0 +1,38 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<br><br>
+
+<form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+
+Enter the <b>url</b> of the audio file<br><input type="text" size="125" name="url" value="<TMPL_VAR URL>">
+<p> 
+Enter the <b>title</b> of the track<br>
+<input type="text" size="50" name="title" value="<TMPL_VAR TITLE>"> &nbsp;&nbsp; <input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published<br><br>
+
+<select name="release_id">
+<option value="whoops" SELECTED>choose release...
+<TMPL_LOOP RELEASE_OPTIONS>
+    <option value="<TMPL_VAR ID>" <TMPL_VAR SELECTED>><TMPL_VAR RELEASE>
+</TMPL_LOOP>
+</select>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Length</b> of the track: <input type="text" size="5" name="length" value="<TMPL_VAR LENGTH>">
+
+<br>
+<br>
+<b>Media Type</b> &nbsp;&nbsp;
+<input type="text" size="20" name="mediatype" value="<TMPL_VAR MEDIATYPE>">
+&nbsp;&nbsp;&nbsp;&nbsp;<b>Bitrate</b> &nbsp;&nbsp;
+<input type="text" size="20" name="bitrate" value="<TMPL_VAR BITRATE>">
+<br>
+<br>
+<input type="hidden" name="action" value="saveTrack">
+<input type="hidden" name="id" value="<TMPL_VAR ID>">
+<input type="submit" value="Save">
+<br>
+</form>
+<br><br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">

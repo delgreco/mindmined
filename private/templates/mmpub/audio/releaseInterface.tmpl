@@ -1,0 +1,42 @@
+<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<br><br>
+<form action="<TMPL_VAR NAME=SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+<b>Release:</b> <input type="text" size=50 name="release" value="<TMPL_VAR NAME=RELEASE>">
+<br><br>
+<b>Release Description</b><br>
+<textarea name="description" cols="80" rows="8" id="description"><TMPL_VAR NAME=DESCRIPTION></textarea>
+<br><br>
+<b>Filename</b> to use:<br>
+<input type="text" size="40" name="filename" value="<TMPL_VAR NAME=FILENAME>">
+<br><br>
+<select name="rec_artist_id">
+<option value="0" SELECTED>choose recording artist...
+<TMPL_LOOP NAME=REC_ARTIST_OPTIONS>
+<option value="<TMPL_VAR NAME=ID>" <TMPL_VAR NAME=SELECTED>><TMPL_VAR NAME=REC_ARTIST>
+</TMPL_LOOP>
+</select>
+<br><br>
+<b>Year</b> of the release&nbsp;&nbsp;
+<input type="text" size="4" name="year" value="<TMPL_VAR NAME=YEAR>">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Product</b> to Include: 
+<select name="store_id">
+<option value="0" SELECTED>associate to product...
+<TMPL_LOOP NAME=PRODUCT_OPTIONS>
+<option value="<TMPL_VAR NAME=ID>" <TMPL_VAR NAME=SELECTED>><TMPL_VAR NAME=PRODUCT>
+</TMPL_LOOP>
+</select>
+<br><br>
+<b>Release image URL</b> to pretty things up<br>
+<input type="text" size="100" name="image_url" value="<TMPL_IF NAME=IMAGE_URL><TMPL_VAR NAME=IMAGE_URL><TMPL_ELSE>http://www.mindmined.com/audiofun-images/</TMPL_IF>">
+<br><br>
+<input type="hidden" name="action" value="saveRelease">
+<input type="hidden" name="id" value="<TMPL_VAR NAME=ID>">
+<input type="submit" value="Save Release">
+</form>
+<br><br><br>
+<br>
+
+
+<TMPL_INCLUDE NAME="../bottom.tmpl">
