@@ -1,0 +1,64 @@
+<!-- <img alt="picked randomly from our archives each day" src="/images/daily_features.gif"><br><br><br> -->
+
+<h2 style="margin-left: 10px;">Daily Features</h2>
+
+<!-- start title of the day table -->
+
+<div style="padding: 18px;">
+    
+    <a class="type4" href="<TMPL_VAR TITLE_URL>"><img alt="full text" vspace="3" border="0" src="/images/title_of_day_item.gif"><br>
+    <img hspace="5" border="0" alt="<TMPL_VAR TITLE_ALT>" style="max-width: 100%;" src="<TMPL_VAR TITLE_IMAGE_URL>"></a><br>
+
+    <a class="type4" href="<TMPL_VAR TITLE_URL>"><TMPL_VAR TITLE></a> by <a class="type4" href="<TMPL_VAR TITLE_URL>#bio"><TMPL_VAR AUTHOR></a><br>
+    <TMPL_VAR TITLE_DESCRIPTION><br>
+    <br>
+    Enter the <a class="type4" href="/public_library">Public Library</a>
+</div>
+<!-- end title of the day -->
+
+<!-- <hr align="right" hspace="5" size="1" width="70%" color="#3E969F"> -->
+<br><br><br>
+
+<!-- start track of the day table -->
+<div style="padding: 18px;">
+    Track of the Day<br><br>
+    
+    <a class="type4" href="<TMPL_VAR RELEASE_URL>"><img style="max-width: 100%;" border="0" alt="<TMPL_VAR TRACK_REC_ARTIST>" src="<TMPL_VAR RELEASE_IMAGE_URL>"></a><br>
+    <figure style="margin: 0 auto;">
+    <audio src="<TMPL_VAR TRACK_URL>" controls="" controlsList="noplaybackrate" noplaybackrate="" flashstopped="true" id="" preload="metadata">
+        Sorry, your browser does not support the
+        <code>audio</code> element.
+    </audio><br>
+    <TMPL_VAR TRACK_TITLE> by <a class="type4" href="<TMPL_VAR TRACK_REC_ARTIST_URL>"><TMPL_VAR TRACK_REC_ARTIST></a>
+    </figure>
+    <!-- <a class="type4" href="<TMPL_VAR TRACK_URL>"><img hspace="5" style="max-width: 100%;" border="0" alt="<TMPL_VAR TRACK_REC_ARTIST>" src="<TMPL_VAR RELEASE_IMAGE_URL>"><br>
+    <img alt="<TMPL_VAR TRACK_MEDIATYPE>, <TMPL_VAR TRACK_BITRATE>" border="0" src="/audiofun-images/download_arrow2.gif" hspace="6">"<TMPL_VAR TRACK_TITLE>"</a>  (<TMPL_VAR TRACK_LENGTH>)<br>
+    by <a class="type4"  href="<TMPL_VAR TRACK_REC_ARTIST_URL>"><TMPL_VAR TRACK_REC_ARTIST><br> -->
+    </a><br>Enter the <a class="type4" href="/audio">Audio Funhouse</a>
+</div>
+<!-- end track of the day -->
+
+<!-- <hr align="center" hspace="5" size="1" width="30%" color="#3E969F"> -->
+<br><br><br>
+
+<!-- start gallery feature -->
+<div style="padding: 18px;">
+    <a class="type4" href="<TMPL_VAR ARTIST_URL>"><img style="max-width: 100%;" alt="today's featured artist is <TMPL_VAR ARTIST>" border="0" src="<TMPL_VAR GALLERY_IMAGE_URL>"><br>artist of the day: <TMPL_VAR ARTIST></a>
+    <br><br>
+    Enter the <a class="type4" href="/gallery">Gallery</a>
+</div>
+<!-- end gallery feature -->
+
+<br><br><br>
+<!--
+<center>
+A percentage of sales from our store<br>
+goes to the maintenance<br>
+of this archive...<br><br>
+-->
+
+<!-- start product feature -->
+<!-- <a class="type4" href="<TMPL_VAR PRODUCT_URL>"><TMPL_VAR PRODUCT><br><img vspace="2" border="0" src="<TMPL_VAR PRODUCT_IMAGE_URL>"></a><br><TMPL_IF PRODUCT_DESCRIPTION><TMPL_VAR PRODUCT_DESCRIPTION><br></TMPL_IF><br><br>Enter the <a class="type4" href="/products/index.html">Store</a> -->
+<!-- end product feature -->
+
+</center>

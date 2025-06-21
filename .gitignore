@@ -3,5 +3,5 @@
 *fodder
 *.swp
 cpanfile.snapshot
-local
+local*
 lib

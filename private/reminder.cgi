@@ -47,6 +47,10 @@ my $dbh = DBI->connect(
     }
 ) || die "Connect failed: $DBI::errstr\n"; 
 
+# having some trouble with this:
+# WARNING: MYSQL_OPT_RECONNECT is deprecated and will be removed in a future version.
+#print "DBD::mysql: $DBD::mysql::VERSION\n";
+
 # cron this script with the -send_reminders 
 # param once per day, preferably in the morning
 

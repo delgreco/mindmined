@@ -1,0 +1,68 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%; margin-left: 25px;">
+
+        <h1 style="font-size: 40px; margin-top: 8px;"><TMPL_VAR REC_ARTIST></h1>
+        <TMPL_IF MAILTO>email: <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br><TMPL_ELSE><b><TMPL_VAR EMAIL></b><br></TMPL_IF>
+        <TMPL_IF HOMESITE>website: <a class="type4" href="<TMPL_VAR HOMESITE>" target="newpage"><TMPL_VAR HOMESITE></a><br></TMPL_IF>
+        <img alt="<TMPL_VAR REC_ARTIST>" src="<TMPL_VAR REC_ARTIST_IMAGE_URL>" style="max-width: 100%;" vspace="8"><br>
+        <article style="padding-left: 0px;">
+            </p>
+            <TMPL_VAR PROFILE>
+            </p>
+        </article>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 12px;">
+
+        <br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br>
+
+        <TMPL_VAR REC_ARTIST> releases:<br><br>
+        <TMPL_LOOP RELEASES>
+            <a class="type4" href="<TMPL_VAR FILENAME>"><img style="max-width: 100%;" src="<TMPL_VAR RELEASE_IMAGE_URL>"><br>
+            <TMPL_VAR RELEASE></a> (<TMPL_VAR YEAR>)<br><br><br>
+        </TMPL_LOOP> <br><br><br>
+
+        <img alt="internet releases from mindmined.com" src="/images/audio_funhouse.gif"><br>
+        <TMPL_INCLUDE NAME="right_nav.tmpl">
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <div style="padding-left: 25px; padding-right: 20px;">
+
+        <h1><TMPL_VAR REC_ARTIST></h1>
+        <TMPL_IF MAILTO>email: <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br><TMPL_ELSE><b><TMPL_VAR EMAIL></b><br></TMPL_IF>
+        <TMPL_IF HOMESITE>website: <a class="type4" href="<TMPL_VAR HOMESITE>" target="newpage"><TMPL_VAR HOMESITE></a><br></TMPL_IF>
+        <img alt="<TMPL_VAR REC_ARTIST>" src="<TMPL_VAR REC_ARTIST_IMAGE_URL>" style="max-width: 100%;" vspace="8"><br>
+        <article style="padding-left: 0px;">
+            </p>
+            <TMPL_VAR PROFILE>
+            </p>
+        </article> <br><br><br>
+
+        <TMPL_VAR REC_ARTIST> releases:<br><br>
+        <TMPL_LOOP RELEASES>
+            <a class="type4" href="<TMPL_VAR FILENAME>"><img style="max-width: 100%;" src="<TMPL_VAR RELEASE_IMAGE_URL>"><br>
+            <TMPL_VAR RELEASE></a> (<TMPL_VAR YEAR>)<br><br><br>
+        </TMPL_LOOP> <br><br><br>
+
+    </div>
+
+
+</div>
+
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

@@ -1,0 +1,62 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="templates/standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; margin-left: 45px; margin-right: 75px; font-size: 1.3em; width: 55%;">
+
+        <h1>Tracks</h1>
+        <ul>
+        <TMPL_LOOP TRACKS>
+            <li><a class="type4" href="<TMPL_VAR URL>"><TMPL_VAR TITLE></a> (<TMPL_VAR LENGTH>) from <a class="type4" href="/audiofun/<TMPL_VAR DIR>/<TMPL_VAR FILENAME>"><TMPL_VAR RELEASE></a> by <a class="type4" href="/audiofun/<TMPL_VAR DIR>"><TMPL_VAR REC_ARTIST></a></li>
+        </TMPL_LOOP>
+        </ul>
+
+    </div>
+
+    <div style="float: right; width: 35%;">
+
+        <br><br>
+        <img alt="independent releases promoted by mindmined.com" src="/images/audio_funhouse.gif"><br><br>
+        tracks: <TMPL_VAR TOTAL><br><br>
+        <a class="type4" href="https://www.mindmined.com/audio/releases.html">
+        <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">releases</a><br>
+        <a class="type4" href="https://www.mindmined.com/audio/rec_artists.html">
+        <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">recording artists</a><br><br><br><br>
+
+        <TMPL_INCLUDE NAME="templates/daily_features/today_track.html">
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <div style="padding: 20px;">
+        <h1>Tracks</h1>
+
+        <ul style="font-size: 1.3em;">
+        <TMPL_LOOP TRACKS>
+            <li style="line-height: 20px; margin-bottom: 10px;"><a class="type4" href="<TMPL_VAR URL>"><TMPL_VAR TITLE></a> (<TMPL_VAR LENGTH>) from <a class="type4" href="/audiofun/<TMPL_VAR DIR>/<TMPL_VAR FILENAME>"><TMPL_VAR RELEASE></a> by <a class="type4" href="/audiofun/<TMPL_VAR DIR>"><TMPL_VAR REC_ARTIST></a></li>
+        </TMPL_LOOP>
+        </ul> <br><br><br>
+
+        <img alt="independent releases promoted by mindmined.com" src="/images/audio_funhouse.gif"><br><br>
+
+        <div style="font-size: 1.3em;">
+            total tracks: <TMPL_VAR TOTAL> <br><br>
+            <a class="type4" href="https://www.mindmined.com/audio/releases.html">
+            <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">releases</a><br>
+            <a class="type4" href="https://www.mindmined.com/audio/rec_artists.html">
+            <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">recording artists</a><br><br><br>
+
+            <TMPL_INCLUDE NAME="templates/daily_features/today_track.html">
+        </div>
+    </div>
+
+</div>
+
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

@@ -1,0 +1,63 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+
+<div class="IX_content">
+
+    <div style="float: left; margin-left: 45px; font-size: 1.3em;">
+
+        <h1>Recording Artists</h1>
+        <ul>
+        <TMPL_LOOP REC_ARTISTS>
+            <li><a class="type4" href="/audiofun/<TMPL_VAR DIR>/"><b><TMPL_VAR REC_ARTIST></b></a></li>
+        </TMPL_LOOP>
+        </ul>
+
+    </div>
+
+    <div style="float: right; width: 35%;">
+
+        <br><br>
+        <img alt="independent releases promoted by mindmined.com" src="/images/audio_funhouse.gif"><br><br>
+        recording artists onsite: <TMPL_VAR TOTAL><br><br>
+        <a class="type4" href="https://www.mindmined.com/audio/releases.html">
+        <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">releases</a><br>
+        <a class="type4" href="https://www.mindmined.com/audio/alpha_by_track.html">
+        <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">tracks</a><br><br><br>
+
+        <TMPL_INCLUDE NAME="templates/daily_features/today_rec_artist.html">
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <div style="padding: 20px;">
+        <h1>Recording Artists</h1>
+        <ul style="font-size: 1.3em;">
+        <TMPL_LOOP REC_ARTISTS>
+            <li><a class="type4" href="/audiofun/<TMPL_VAR DIR>/"><b><TMPL_VAR REC_ARTIST></b></a></li>
+        </TMPL_LOOP>
+        </ul> <br><br><br>
+
+        <img alt="independent releases promoted by mindmined.com" src="/images/audio_funhouse.gif"><br><br>
+       
+        <div style="font-size: 1.3em;"> 
+            recording artists onsite: <TMPL_VAR TOTAL><br><br>
+            <a class="type4" href="https://www.mindmined.com/audio/releases.html">
+            <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">releases</a><br>
+            <a class="type4" href="https://www.mindmined.com/audio/alpha_by_track.html">
+            <img align="absmiddle" border="0" hspace="3" vspace="3" src="/images/bullet.gif">tracks</a><br><br><br>
+
+
+            <TMPL_INCLUDE NAME="templates/daily_features/today_rec_artist.html">
+        </div>
+    </div>
+
+</div>
+
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

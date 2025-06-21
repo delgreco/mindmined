@@ -1,0 +1,15 @@
+<div>
+    <!-- <img alt="<TMPL_VAR TRACK_MEDIATYPE>, <TMPL_VAR TRACK_BITRATE>" vspace="3" border="0" src="/images/track_of_day_item.gif"><br> -->
+    Track of the Day<TMPL_IF HOMEPAGE> from the <a href="/audio">Audio Funhouse</a></TMPL_IF><br><br>
+    
+    <a class="type4" href="<TMPL_VAR RELEASE_URL>"><img style="max-width: 100%;" border="0" alt="<TMPL_VAR TRACK_REC_ARTIST>" src="<TMPL_VAR RELEASE_IMAGE_URL>"></a><br>
+    <figure style="margin: 0 auto;">
+    <audio src="<TMPL_VAR TRACK_URL>" controls="" controlsList="noplaybackrate" noplaybackrate="" flashstopped="true" id="" preload="metadata">
+        Sorry, your browser does not support the
+        <code>audio</code> element.
+    </audio><br>
+    <TMPL_VAR TRACK_TITLE> by <a class="type4" href="<TMPL_VAR TRACK_REC_ARTIST_URL>"><TMPL_VAR TRACK_REC_ARTIST></a>
+    </figure>
+</div>
+<!-- end track of the day -->
+

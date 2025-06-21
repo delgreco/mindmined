@@ -1,0 +1,35 @@
+<TMPL_INCLUDE NAME="standard_head.tmpl">
+
+<script>
+
+function toggleDarkLight() {
+    let dark_mode = document.getElementById("dark_mode").checked;
+    if ( dark_mode ) {
+        goDark();
+        window.localStorage.setItem('user_dark', 'yes');
+    }
+    else {
+        goLight();
+        window.localStorage.setItem('user_dark', 'no');
+    }
+}
+
+</script>
+
+</head>
+<body>
+<TMPL_INCLUDE NAME="standard_top.tmpl">
+
+<div style="padding: 20px; height: 100%;">
+
+    <h1>Your Preferences</h1>
+
+    <br>
+    
+    <div style="margin-left: 100px; font-size: 1.7em;">
+        <input style="height: 30px; width: 30px; vertical-align: middle; margin-right: 10px;" type="checkbox" id="dark_mode" name="dark_mode" onchange="toggleDarkLight();"> Dark Mode
+    </div>
+
+</div>
+
+<TMPL_INCLUDE NAME="standard_bottom.tmpl">

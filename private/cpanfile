@@ -1,5 +1,6 @@
 requires 'CGI';
-requires 'DBD::mysql', '== 4.050';
+#requires 'DBD::mysql', '== 4.050';
+requires 'DBD::mysql';
 requires 'Dotenv';
 requires 'HTML::Template';
 requires 'HTML::Parser';
