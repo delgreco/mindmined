@@ -1,0 +1,65 @@
+<TMPL_INCLUDE NAME="standard_head.tmpl">
+
+<style>
+
+</style>
+
+</head>
+
+<body>
+
+<TMPL_INCLUDE NAME="standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%;">
+
+        <!-- newsbits -->
+        <TMPL_LOOP NEWSBITS>
+            <span style="width: 100%; padding-left: 20px;"><a href="/news/archive/<TMPL_VAR FILENAME>"><TMPL_VAR NEWSBIT_DATETIME></a></span>
+            <article>
+                 <p class="dropcap">
+                <TMPL_VAR NEWSBIT>
+                </p>
+                <TMPL_IF NEWSBIT_IMAGE_URL><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF></TMPL_IF>
+                <br><br>
+                <div style="text-align: center;"><img width="40" height="40" src="/images/2004_logo.jpg"></div>
+            </article>
+        </TMPL_LOOP>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 12px; margin-right: 15px;">
+
+        <br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br>
+
+        <TMPL_INCLUDE NAME="templates/daily_features/today_artist_index.html"><br><br><br><br><br>
+        <TMPL_INCLUDE NAME="templates/daily_features/today_track_index.html"><br><br><br><br><br><br>
+        <TMPL_INCLUDE NAME="daily_features/today_title_index.html">
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <!-- newsbits -->
+    <TMPL_LOOP NEWSBITS>
+        <article>
+            <p class="dropcap"><TMPL_VAR NEWSBIT></p>
+            <TMPL_IF NEWSBIT_IMAGE_URL><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF></TMPL_IF>
+            <br><br><br>
+            <div style="text-align: center;"><img src="/images/2004_logo.jpg" height="25" width="25"></div>
+        </article>
+    </TMPL_LOOP>
+
+    <TMPL_INCLUDE NAME="daily_features/today.html">
+
+</div>
+
+
+<TMPL_INCLUDE NAME="standard_bottom.tmpl">

@@ -14,14 +14,13 @@ use DBI;
 use HTML::Template;
 use Dotenv -load;
 
-use FatalsToEmail    
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/library.tmp
-      Seconds 60
-      Debug 1
-    );  
+use FatalsToEmail qw(
+    Mailhost localhost
+    Address marcusdelgreco@gmail.com
+    Error_cache /tmp/library.tmp
+    Seconds 60
+    Debug 1
+);
 
 my $dbh = DBI->connect(
     "DBI:mysql:$ENV{DB_NAME}",
@@ -47,14 +46,21 @@ my $action=$cgiobject->param("action");
 
 if ( $ARGV[0] eq "--refresh" ) {
     # when called this way, we need to manually define doc root
-    $ENV{DOCUMENT_ROOT} = '~/www';
-    open(LOG, ">> $ENV{DOCUMENT_ROOT}/cron.log");
+    $ENV{DOCUMENT_ROOT} = "$ENV{HOME}/www";
+    open(LOG, ">> $ENV{HOME}/cron.log");
     refreshNews('command_line_call');
     exit;
 } 
 
 $action = 'mainInterface' if ! $action;
 &{\&{$action}}();
+
+
+=head2 assembleNewsletter()
+
+TODO
+
+=cut
 
 sub assembleNewsletter {
     my $month = $cgiobject->param('month');
@@ -99,6 +105,13 @@ sub assembleNewsletter {
     mainInterface($message);
 }
 
+
+=head2 deleteNewsbit()
+
+TODO
+
+=cut
+
 sub deleteNewsbit {
     my $id=$cgiobject->param('id'); 
     my $select = <<"SQL";
@@ -106,8 +119,8 @@ sub deleteNewsbit {
     FROM news 
     WHERE id = ?
 SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($id) || die "execute: $select: $DBI::errstr";
+    my $sth = $dbh->prepare($select);
+    $sth->execute($id);
     my ($newsbit) = $sth->fetchrow_array();
     # keep it short
     $newsbit = substr($newsbit, 0, 20);
@@ -115,22 +128,29 @@ SQL
     # delete the entry
     my $delete="DELETE FROM news WHERE id = ?";
     $sth = $dbh->prepare($delete);
-    $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
+    $sth->execute($id);
     my $message = qq {$newsbit deleted from the database.};
     mainInterface($message);
 }
+
+=head2 mainInterface()
+
+TODO
+
+=cut
 
 sub mainInterface {
     my $message = qq {<font color="red">$_[0]</font>};
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/mainInterface.tmpl');
     my $newsletter_options;
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, datetime, newsletter_status, id 
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category,
+    `datetime`, newsletter_status, id 
     FROM news 
     ORDER BY datetime DESC
     SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my @newsbits; my $i;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $datetime, $newsletter_status, $id) = $sth->fetchrow_array()) {
         my %row;
@@ -146,8 +166,8 @@ sub mainInterface {
         my $day = substr($datetime, 8, 2);
         my $year = substr($datetime, 0, 4);
         # keep it shortish
-    $newsbit = substr($newsbit, 0, 90);
-    $newsbit .= qq {...};
+        $newsbit = substr($newsbit, 0, 90);
+        $newsbit .= qq {...};
         if ($newsletter_status eq 'pending') {
             $row{PENDING} = 1;   # true
         }
@@ -167,12 +187,12 @@ sub mainInterface {
         push(@newsbits, \%row);
     }
     # get newsletters
-    $select = <<"SQL";
+    $select = <<~"SQL";
     SELECT number, month, year, body FROM newsletters 
     ORDER BY number DESC
-SQL
+    SQL
     $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my @newsletter_options;
     while (my ($number, $month, $year, $body) = $sth->fetchrow_array()) {
         my %row;
@@ -246,6 +266,11 @@ sub newsbitInterface {
     print $output;
 }
 
+=head2 newsletterInterface()
+
+TODO
+
+=cut
 
 sub newsletterInterface {
     my $number=$cgiobject->param('number'); 
@@ -255,8 +280,8 @@ sub newsletterInterface {
     FROM newsletters 
     WHERE number = ?
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($number) || die "execute: $select: $DBI::errstr";
+    my $sth = $dbh->prepare($select);
+    $sth->execute($number);
     my ($month, $year, $body) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
     $t->param(BODY => $body);
@@ -266,11 +291,20 @@ sub newsletterInterface {
     print $output;
 }
 
+=head2 publishRSS()
+
+TODO
+
+=cut
+
 sub publishRSS {
     # get current datetime
-    my $select_now="SELECT YEAR(NOW()), DAYOFMONTH(NOW()), DAYNAME(NOW()), MONTHNAME(NOW()), DATE_FORMAT(NOW(), '%H:%i:%s')";
+    my $select_now = <<~"SQL";
+    SELECT YEAR(NOW()), DAYOFMONTH(NOW()), DAYNAME(NOW()), MONTHNAME(NOW()), 
+    DATE_FORMAT(NOW(), '%H:%i:%s')
+    SQL
     my $sth = $dbh->prepare($select_now);
-    $sth->execute() || die "sth->execute($select_now): $DBI::errstr\n";
+    $sth->execute();
     my ($year, $dayofmonth, $dayname, $monthname, $time) = $sth->fetchrow_array();
     # parse out needed date bits
     $dayname = substr($dayname, 0, 3);
@@ -331,18 +365,24 @@ SQL
     close $feedpage;
 }
 
+=head2 refreshAudioIndex
+
+TODO
+
+=cut
+
 sub refreshAudioIndex {
     my $t = HTML::Template->new(filename => 'templates/audio/index.tmpl');
     my $counter = 0;
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_URL, newsbit_image_URL, category, datetime, newsletter_status 
+    SELECT newsbit, newsbit_URL, newsbit_image_URL, category, `datetime`, newsletter_status 
     FROM news 
     WHERE category = 'audiofunhouse' 
     AND published = 1
     ORDER BY datetime DESC
     SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my @newsbits;
     while (my ($newsbit, $newsbit_url, $newsbit_image_url, $category, $datetime, $newsletter_status) = $sth->fetchrow_array()) {
         $counter++;
@@ -364,6 +404,12 @@ sub refreshAudioIndex {
     print AUDIO_INDEX "$output";
     close AUDIO_INDEX;
 }
+
+=head2 refreshGalleryIndex
+
+TODO
+
+=cut
 
 sub refreshGalleryIndex {
     my $t = HTML::Template->new(filename => 'templates/gallery/index.tmpl');
@@ -399,6 +445,12 @@ sub refreshGalleryIndex {
     close GALLERY_INDEX;
 }
 
+=head2 refreshIndex
+
+TODO
+
+=cut
+
 sub refreshIndex {
     # keep index page piping hot with news
     my $t = HTML::Template->new(filename => 'templates/index.tmpl');
@@ -411,7 +463,7 @@ sub refreshIndex {
     ORDER BY datetime DESC
     SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my $counter = 0; my @newsbits;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month) = $sth->fetchrow_array()) {
         my %row;
@@ -420,7 +472,7 @@ sub refreshIndex {
         my $monthnum = substr($datetime, 5, 2);
         my $day = substr($datetime, 8, 2);
         my $year = substr($datetime, 0, 4);
-        if (! $title) {
+        if ( ! $title ) {
             $title = substr($newsbit, 0, 45) . '...';
         }
 
@@ -445,6 +497,12 @@ sub refreshIndex {
     print $page "$output";
     close $page;
 }
+
+=head2 refreshLibraryIndex
+
+TODO
+
+=cut
 
 sub refreshLibraryIndex {
     my $t = HTML::Template->new(filename => 'templates/library/index.tmpl');
@@ -476,10 +534,17 @@ sub refreshLibraryIndex {
     $t->param(NEWSBITS => \@newsbits);
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
-    open(LIBRARY_INDEX, "> $ENV{DOCUMENT_ROOT}/public_library/index.html") || die("Unable to open file: $!");
+    my $library_index = "$ENV{DOCUMENT_ROOT}/public_library/index.html";
+    open(LIBRARY_INDEX, "> $library_index") || die("Unable to open file '$library_index': $!");
     print LIBRARY_INDEX "$output";
     close LIBRARY_INDEX;
 }
+
+=head2 refreshNews
+
+TODO
+
+=cut
 
 sub refreshNews {
     my $command_line_call = $_[0];
@@ -501,7 +566,7 @@ sub refreshNews {
     }
 }
 
-=head2 refreshNewsIndex()
+=head2 refreshNewsIndex
 
 Refresh the list of news items at C<news/index.html>.  
 
@@ -562,6 +627,12 @@ sub refreshNewsIndex {
     close FINAL;
 }
 
+=head2 saveNewsbit()
+
+TODO
+
+=cut
+
 sub saveNewsbit {  
     my $title=$cgiobject->param('title'); 
     my $published=$cgiobject->param('published'); 
@@ -602,6 +673,12 @@ sub saveNewsbit {
     mainInterface($message);
 }
 
+=head2 saveNewsletter()
+
+TODO
+
+=cut
+
 sub saveNewsletter {  
     my $number=$cgiobject->param('number'); 
     my $month=$cgiobject->param('month'); 
@@ -616,6 +693,12 @@ sub saveNewsletter {
     refreshNews();
     mainInterface($message);
 }
+
+=head2 _getNewsbitFilename()
+
+TODO
+
+=cut
 
 sub _getNewsbitFilename {
     my $title = $_[0];

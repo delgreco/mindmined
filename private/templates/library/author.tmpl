@@ -1,0 +1,109 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl">
+
+<style>
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-rows: 1fr;
+    grid-gap: 20px;
+}
+
+</style>
+
+</head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%; margin-left: 30px;">
+
+        <h1><TMPL_VAR FIRST> <TMPL_VAR LAST></h1>
+        
+        <TMPL_IF MAILTO>
+            <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br>
+        <TMPL_ELSE>
+            <b><TMPL_VAR EMAIL></b><br>
+        </TMPL_IF>
+
+        <TMPL_IF HOMESITE>
+            <a class="type4" href="<TMPL_VAR HOMESITE>"><TMPL_VAR HOMESITE></a><br><br>
+        <TMPL_ELSE>
+            <br>
+        </TMPL_IF>
+
+        <article>
+            <p><TMPL_VAR BIO></p>
+        </article>
+
+        <TMPL_IF TITLES>
+            <h2>Titles by <TMPL_VAR FIRST> <TMPL_VAR LAST> on Mind Mined</h2><br>
+
+            <div class="grid">
+            <TMPL_LOOP TITLES>
+                <div style="text-align: bottom; text-align: center; font-size: 1.4em;">
+                    <a href="<TMPL_VAR TITLE_URL>"><img src="<TMPL_VAR IMAGE_URL>" style="max-width: 100%;"><br>
+                    <TMPL_VAR PAGETITLE></a> (<TMPL_VAR GENRE>)
+                </div>
+            </TMPL_LOOP>
+            </div>
+        <TMPL_ELSE>
+            <TMPL_VAR FIRST> <TMPL_VAR LAST> is not currently publishing a title on mindmined.com.
+        </TMPL_IF>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 12px;">
+
+        <br><br>
+
+        <img alt="latest internet releases from mindmined.com" src="/library-images/library_logo.gif"><br><br>
+
+        <TMPL_INCLUDE NAME="menu.tmpl"><br><br><br><br><br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br><br>
+
+        <br>
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile" style="margin-left: 12px;">
+
+        <h1><TMPL_VAR FIRST> <TMPL_VAR LAST></h1>
+        
+        <TMPL_IF MAILTO>
+            <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br>
+        <TMPL_ELSE>
+            <b><TMPL_VAR EMAIL></b><br>
+        </TMPL_IF>
+
+        <TMPL_IF HOMESITE>
+            <a class="type4" href="<TMPL_VAR HOMESITE>"><TMPL_VAR HOMESITE></a><br><br>
+        <TMPL_ELSE>
+            <br>
+        </TMPL_IF>
+
+        <article>
+            <p><TMPL_VAR BIO></p>
+        </article> <br><br>
+
+        <TMPL_IF TITLES>
+            <h2>Titles by <TMPL_VAR FIRST> <TMPL_VAR LAST> on Mind Mined</h2>
+
+            <TMPL_LOOP TITLES>
+                <a href="<TMPL_VAR TITLE_URL>"><img src="<TMPL_VAR IMAGE_URL>" style="max-width: 95%;"><br>
+                <h3><TMPL_VAR PAGETITLE></a> (<TMPL_VAR GENRE>)</h3>
+            </TMPL_LOOP>
+        <TMPL_ELSE>
+            <TMPL_VAR FIRST> <TMPL_VAR LAST> is not currently publishing a title on mindmined.com.
+        </TMPL_IF>
+
+</div>
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

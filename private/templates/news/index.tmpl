@@ -1,0 +1,34 @@
+﻿<TMPL_INCLUDE NAME="../standard_head.tmpl">
+
+</head>
+<body>
+
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+<div class="IX_content" style="margin-left: 20px; margin-right: 25px;">
+
+    <h1>News  Archives</h1>
+    <!-- newsbits -->
+    <ul>
+    <TMPL_LOOP NEWSBITS>
+        <li><TMPL_VAR NEWSBIT_DATETIME>: <a href="/news/archive/<TMPL_VAR FILENAME>"><TMPL_VAR NEWSBIT_TITLE></a></li>
+    </TMPL_LOOP>
+    </ul><br><br>
+
+</div>
+
+<div class="IX_content_mobile" style="margin-right: 35px;">
+
+    <h1 style="margin: left: 20px;">News Archives</h1>
+    <!-- newsbits -->
+    <ul>
+    <TMPL_LOOP NEWSBITS>
+        <li style="margin-bottom: 10px;"><TMPL_VAR NEWSBIT_DATETIME>: <a href="/news/archive/<TMPL_VAR FILENAME>"><TMPL_VAR NEWSBIT_TITLE></a></li>
+    </TMPL_LOOP>
+    </ul><br><br>
+
+</div>
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">
+
+

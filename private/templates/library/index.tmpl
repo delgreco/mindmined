@@ -1,0 +1,76 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+
+<!--
+<TITLE>The Mind Mined Public Library</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<META NAME="keywords" CONTENT="<keywords>">
+<META NAME="description" CONTENT="Publishing plays, fiction, nonfiction, and poetry! Full texts available FREE from Mind Mined...  Uncensored, unedited.  Courtesy of our independent authors....">
+<META NAME="robots" CONTENT="index,follow">
+<META NAME="revisit" CONTENT="15 days">
+window.onload=new Function('window.status="The Mind Mined Public Library"')
+-->
+
+
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%;">
+
+        <TMPL_LOOP NEWSBITS>
+            <span style="width: 100%; padding-left: 20px;"><TMPL_VAR NEWSBIT_DATETIME></span>
+            <article>
+                <p class="dropcap">
+                <TMPL_VAR NEWSBIT>
+                </p>
+                <TMPL_IF NEWSBIT_IMAGE_URL><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF></TMPL_IF>
+                <br><br><br>
+                <div style="text-align: center;"><img src="/images/2004_logo.jpg"></div>
+            </article>
+        </TMPL_LOOP>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 12px;">
+
+	    <img alt="latest internet releases from mindmined.com" vspace="10" src="/library-images/library_logo.gif"><br><br>
+        <br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br><br><br>
+
+        <TMPL_INCLUDE NAME="menu.tmpl"><br><br>
+        <br><br>
+
+        <TMPL_INCLUDE NAME="../daily_features/today_title.html">
+
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <!-- newsbits -->
+    <TMPL_LOOP NEWSBITS>
+        <article>
+            <p class="dropcap"><TMPL_VAR NEWSBIT></p>
+            <TMPL_IF NEWSBIT_IMAGE_URL><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF></TMPL_IF>
+            <br><br><br>
+            <div style="text-align: center;"><img src="/images/2004_logo.jpg" height="25" width="25"></div>
+        </article>
+    </TMPL_LOOP>
+
+    <div style="padding: 20px;">
+        <TMPL_INCLUDE NAME="menu.tmpl">
+        <br><br>
+        <TMPL_INCLUDE NAME="../daily_features/today_title.html">
+    </div>
+
+</div>
+
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

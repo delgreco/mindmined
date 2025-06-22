@@ -1,0 +1,49 @@
+<br>
+<div align="center">
+    <!-- <a href="/index.html"><img src="/images/logo_transparent.gif" width="40" height="34" border="0" alt="go to Mind Mined top page"></a><br> -->
+    <a href="/gallery/index.html"><img id="gallery_head" class="gallery_head" style="max-width: 100%;" border="0" alt="go to the Mind Mined Gallery index"></a>
+
+</div>
+<br>
+<br>
+
+<table width="50%" align="center">
+<tr>
+<td align="center">
+
+<TMPL_IF PREVIOUS_PAGE>
+    <a href="<TMPL_VAR PREVIOUS_PAGE>" onmouseout="MM_swapImgRestore();" onmouseover="MM_swapImage('previous', '', '/images/left_arrow1.png', 1);">
+    <img src="/images/left_arrow.png" alt="previous" name="previous" width="34" height="33" border="0" id="previous" />
+    </a>
+</TMPL_IF>
+
+</td>
+<td align="center">
+<form name="jumpform">
+<div align="center">
+<select name="jumper" onChange="jump();">
+    <option SELECTED>gallery listings... 
+    <option value="/gallery/artists.html">artist index  
+    <option value="/gallery">newest exhibits
+    <option value="https://www.mindmined.com">--- also  ---
+    <option value="/news">news
+    <option value="/public_library">library
+    <option value="/preferences.html">dark mode
+    <option value="/contact">contact us
+    <option value="https://www.mindmined.com">home
+</select>
+</div>
+</form>
+</td>
+<td align="center">
+
+<TMPL_IF NEXT_PAGE>
+    <a href="<TMPL_VAR NEXT_PAGE>" onmouseout="MM_swapImgRestore()" onmouseover="MM_swapImage('next', '', '/images/right_arrow1.png', 1);">
+    <img src="/images/right_arrow.png" alt="next" name="next" width="34" height="33" border="0" id="next" />
+</a>
+</TMPL_IF>
+
+</td>
+</tr>
+</table>
+

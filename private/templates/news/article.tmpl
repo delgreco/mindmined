@@ -1,0 +1,71 @@
+﻿<TMPL_INCLUDE NAME="../standard_head.tmpl">
+
+<style>
+
+
+</style>
+
+</head>
+<body>
+
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%;">
+        <span style="width: 100%; padding-left: 20px;"><TMPL_VAR NEWSBIT_DATETIME></span>
+        <article>
+            <p class="dropcap">
+            <TMPL_VAR NEWSBIT>
+            </p>
+            <TMPL_IF NEWSBIT_IMAGE_URL>
+                <TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF>
+            </TMPL_IF>
+            <TMPL_IF NEWSBIT_URL>
+                <br><br>
+                <a href="<TMPL_VAR NEWSBIT_URL>">Touch here to dig this...</a>
+                <br>
+            </TMPL_IF>
+            <br><br>
+        </article>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 25px;">
+        <div style="width: 50%;">
+            <img src="/images/news.gif"><br><br>
+            At their best, these news bulletins announce amazing new entries to our <a href="/public_library/">Public Library</a>, <a href="/audio/">Audio Funhouse</a>, or <a href="/gallery/">Gallery</a> from worldwide contributors.  At their worst, they devolve into the editor's 2am bloggings.<br><br>
+            Welcome to Mind Mined.<br><br>
+            browse our <a href="/news/">News Archives</a>
+        </div>
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+        <article>
+            <p><TMPL_VAR NEWSBIT></p>
+            <TMPL_IF NEWSBIT_IMAGE_URL>
+                <TMPL_IF NEWSBIT_IMAGE_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF>
+            </TMPL_IF>
+            <TMPL_IF NEWSBIT_URL>
+                <br><br>
+                <a href="<TMPL_VAR NEWSBIT_URL>">Touch here to dig this...</a>
+                <br>
+            </TMPL_IF>
+            <br>
+        </article>
+            
+        <div style="padding: 30px; font-size: 1.2em;">
+            <h2>The Mind Mined News</h2>
+            At their best, these news bulletins announce amazing new entries to our <a href="/public_library/">Public Library</a>, <a href="/audio/">Audio Funhouse</a>, or <a href="/gallery/">Gallery</a> from worldwide contributors.  At their worst, they devolve into the editor's 2am bloggings.<br><br>
+            Welcome to Mind Mined.<br><br>
+            browse our <a href="/news/">News Archives</a>
+        </div>
+
+</div>
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

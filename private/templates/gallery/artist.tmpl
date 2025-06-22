@@ -1,0 +1,50 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl">
+
+<style>
+
+h1 {
+    font-size: 34px;
+}
+
+h2 {
+    font-size: 22px;
+}
+
+</style>
+
+</head>
+
+<body>
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<br>
+
+<center>
+
+<h1>The <TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME> Collection</h1>
+
+<TMPL_LOOP IMAGES>
+    <h2 style="margin: 0px;"><a href="<TMPL_VAR FILENAME>"><TMPL_VAR TITLE> (<TMPL_VAR YEAR>)</a></h2>
+</TMPL_LOOP> <br>
+
+
+<br>
+<div style="font-size: 1.3em;">
+    <a name="bio"></a>
+    <hr>
+    <i><TMPL_VAR BIO></i>
+    <br><br>
+
+    <TMPL_IF EMAIL><a target="_blank" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br></TMPL_IF>
+    <TMPL_IF HOMESITE><a target="_blank" href="<TMPL_VAR HOMESITE>"><TMPL_VAR HOMESITE></a><br></TMPL_IF>
+</div>
+
+</center>
+
+<hr>
+
+
+
+<TMPL_INCLUDE NAME="bottom.tmpl">
+
+

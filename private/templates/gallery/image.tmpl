@@ -1,0 +1,54 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl">
+
+<style>
+
+h1 {
+    font-size: 34px;
+}
+
+</style>
+
+</head>
+
+<body bgcolor="#FFFFFF" onLoad="MM_preloadImages('/images/left_arrow1.png', '/images/right_arrow1.png');">
+
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<br>
+<div  style="margin: 10px;" align="center">
+    <img style="max-width: 100%;" src="<TMPL_VAR URL>">
+</div>
+<br>
+
+<div align="center">
+    <h1><TMPL_VAR TITLE></h1>
+    <h2><a href="/gallery/<TMPL_VAR DIR>"><TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME></a></h2>
+</div>
+
+<center>
+<TMPL_VAR DESCRIPTION>
+<br>
+<br>
+<div style="font-size: 1.4em;">
+    <a href="/gallery/<TMPL_VAR DIR>">The <TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME> Collection</a>:  <TMPL_LOOP ENTRIES> <span style="white-space: pre;">[<TMPL_IF LINKED><a href="<TMPL_VAR FILENAME>"></TMPL_IF> <TMPL_VAR COUNTER> <TMPL_IF LINKED></a></TMPL_IF>]</span> </TMPL_LOOP>
+</div>
+
+<br>
+<br>
+<br>
+<hr>
+
+<div style="font-size: 1.3em;">
+    <i><TMPL_VAR BIO></i>
+    <br>
+    <br>
+    <TMPL_IF EMAIL><a href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br></TMPL_IF>
+    <TMPL_IF HOMESITE><a href="<TMPL_VAR HOMESITE>"><TMPL_VAR HOMESITE></a><br></TMPL_IF>
+</div>
+
+</center>
+
+<hr> <br><br>
+
+<TMPL_INCLUDE NAME="bottom.tmpl">
+

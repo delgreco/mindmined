@@ -55,6 +55,7 @@ my $dbh = DBI->connect(
 # param once per day, preferably in the morning
 
 if ($ARGV[0] && $ARGV[0] eq "-send_reminders") {  # command line for cron
+    print "Checking reminders to send...\n";
     oneTimeReminders();
     monthlyReminders();
     yearlyReminders();
@@ -519,9 +520,8 @@ sub monthlyReminders {
     my $sth = $dbh->prepare($select);
     $sth->execute();
     while (my ($recipient, $reminder, $account_number, $reminder_type, $id) = $sth->fetchrow_array()) {
-        &sendReminder($recipient, $reminder, $reminder_type, $account_number);
+        sendReminder($recipient, $reminder, $reminder_type, $account_number);
     }
-    $sth->finish();
 }
 
 ######

@@ -1,0 +1,23 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="top.tmpl">
+
+<center>
+<br>
+<br>
+<h1>Artists with collections on loan to our gallery</h1>
+<br>
+<br>
+
+<TMPL_LOOP ARTISTS>
+    <h2 style="margin: 0px;"><a href="/gallery/<TMPL_VAR DIR>"><TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME></a></h2>
+</TMPL_LOOP>
+
+<br>
+<br>
+<br>
+<br>
+
+<hr>
+<br>
+
+<TMPL_INCLUDE NAME="bottom.tmpl">

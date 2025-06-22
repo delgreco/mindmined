@@ -3,5 +3,6 @@
 *fodder
 *.swp
 cpanfile.snapshot
+private/templates/daily_features/*.html
 local*
 lib

@@ -1,0 +1,78 @@
+<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; margin-left: 45px; font-size: 1.3em;">
+
+        <h1>Authors</h1>
+
+        <ul>
+        <TMPL_LOOP AUTHORS>  
+            <li><a class="type4" href="<TMPL_VAR CLOSEUP_URL>"><TMPL_VAR FIRST> <TMPL_VAR LAST></a> <TMPL_IF BIO>- <TMPL_VAR BIO></TMPL_IF></li>
+        </TMPL_LOOP>  
+        </ul>
+        <ul>
+
+    </div>
+
+    <div style="float: right; width: 35%;">
+
+        <br><br>
+
+        <img alt="latest internet releases from mindmined.com" vspace="30" src="/library-images/library_logo.gif"><br>
+
+        <TMPL_INCLUDE NAME="menu.tmpl"><br><br><br><br><br>
+
+        <TMPL_INCLUDE NAME="templates/daily_features/today_title.html"><br><br><br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br><br>
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <div style="padding: 20px;">
+
+        <h1>Authors</h1>
+
+        <ul style="font-size: 1.3em;">
+        <TMPL_LOOP AUTHORS>  
+            <li style="line-height: 20px; margin-bottom: 10px;"><a class="type4" href="<TMPL_VAR CLOSEUP_URL>"><TMPL_VAR FIRST> <TMPL_VAR LAST></a> <TMPL_IF BIO>- <TMPL_VAR BIO></TMPL_IF></li>
+        </TMPL_LOOP>  
+        </ul>
+        <br><br><br>
+
+        <img alt="latest internet releases from mindmined.com" vspace="30" src="/library-images/library_logo.gif"><br><br>
+
+        <div style="font-size: 1.3em;">
+
+            <TMPL_INCLUDE NAME="menu.tmpl"><br><br><br><br><br>
+
+            <TMPL_INCLUDE NAME="templates/daily_features/today_title.html">
+
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+</td>
+</tr>
+</table>
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">

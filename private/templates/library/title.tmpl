@@ -1,0 +1,87 @@
+﻿<TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
+<TMPL_INCLUDE NAME="../standard_top.tmpl">
+
+<div class="IX_content">
+
+    <div style="float: left; width: 60%; padding-left: 25px;">
+
+        <h1><TMPL_VAR TITLE></h1>
+        <h2>by <a href="/public_library/authors/<TMPL_VAR AUTHOR_CLOSEUP_FILE>.html"><TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME></a></h2>
+        <img src="<TMPL_VAR IMAGE_URL>" style="max-width: 100%;" hspace="10" vspace="8" alt="<TMPL_VAR IMAGE_ALT_TEXT>"><br><br>
+
+        <article>
+            <TMPL_VAR BODY>
+        </article>
+
+        <hr>
+        <i><TMPL_VAR BIO></i>
+        <br>
+        <br>
+        <TMPL_IF EMAIL>
+            <b>Email:</b> <TMPL_IF MAILTO>
+            <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br>
+            <TMPL_ELSE>
+            <TMPL_VAR EMAIL><br>
+            </TMPL_IF>
+        </TMPL_IF>
+        <TMPL_IF HOMESITE>
+        <b>Website:</b> <a class="type4" href="<TMPL_VAR HOMESITE>" target="newpage"><TMPL_VAR HOMESITE></a><br>
+        </TMPL_IF>
+        <hr>
+
+    </div>
+
+    <div style="float: right; width: 33%; padding: 12px;">
+
+        <img alt="latest internet releases from mindmined.com" vspace="10" src="/library-images/library_logo.gif"><br><br>
+        <br>
+
+        <a href="https://www.mindmined.com/news.xml">subscribe via <img valign="center" alt="Mind Mined syndicated" src="https://www.mindmined.com/news/images/xml.gif" border="0" hspace="9"></a> <br><br><br><br>
+
+        <TMPL_INCLUDE NAME="menu.tmpl"><br><br>
+        <br><br>
+
+        <br>
+
+    </div>
+
+    <div style="clear: both;"></div>
+
+</div>
+
+<div class="IX_content_mobile">
+
+    <h1 style="font-size: 2.5em; padding-left: 10px; margin-top: 10px; margin-bottom: 5px;"><TMPL_VAR TITLE></h1>
+    <h2 style="font-size: 1.5em; padding-left: 10px; ">by <a href="/public_library/authors/<TMPL_VAR AUTHOR_CLOSEUP_FILE>.html"><TMPL_VAR FIRST_NAME> <TMPL_VAR LAST_NAME></a></h2>
+    <img src="<TMPL_VAR IMAGE_URL>" style="max-width: 95%;" hspace="10" vspace="8" alt="<TMPL_VAR IMAGE_ALT_TEXT>"><br><br>
+
+    <article>
+        <p>
+        <TMPL_VAR BODY>
+        </p>
+    </article>
+
+    <div style="padding: 20px;">
+        <hr>
+        <i><TMPL_VAR BIO></i>
+        <br>
+        <br>
+        <TMPL_IF EMAIL>
+            <b>Email:</b> <TMPL_IF MAILTO>
+            <a class="type4" href="mailto:<TMPL_VAR EMAIL>"><TMPL_VAR EMAIL></a><br>
+            <TMPL_ELSE>
+            <TMPL_VAR EMAIL><br>
+            </TMPL_IF>
+        </TMPL_IF>
+        <TMPL_IF HOMESITE>
+        <b>Website:</b> <a class="type4" href="<TMPL_VAR HOMESITE>" target="newpage"><TMPL_VAR HOMESITE></a><br>
+        </TMPL_IF>
+        <hr>
+    </div>
+
+</div>
+
+
+
+
+<TMPL_INCLUDE NAME="../standard_bottom.tmpl">
