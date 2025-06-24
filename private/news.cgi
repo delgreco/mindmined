@@ -213,45 +213,21 @@ sub mainInterface {
 
 =head2 newsbitInterface()
 
-TODO
+Add or edit a newsbit.
 
 =cut
 
 sub newsbitInterface {
     my $id=$cgiobject->param('id'); 
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsbitInterface.tmpl');
-    my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $add_or_update, $published);
-    if ( $id ) {  # get info about this news item
-        $add_or_update = 'Update';
-        my $select = <<~"SQL";
-        SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, datetime, published
-        FROM news 
-        WHERE id = ?
-        SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute($id) || die "execute: $select: $DBI::errstr";
-        ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published) = $sth->fetchrow_array();
-    }
-    else {   
-        $add_or_update = 'Add';
-    }
-    my @categories;
     my $select = <<~"SQL";
-    SELECT name 
-    FROM news_categories
-    ORDER BY id
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, published
+    FROM news 
+    WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute() || die "execute: $select: $DBI::errstr";
-    while (my ($name) = $sth->fetchrow_array()) {
-        my %row;
-        if ($name eq $newsbit_category) { 
-            $row{CHECKED} = qq {CHECKED};
-        }
-        $row{CATEGORY} = $name;
-        push(@categories, \%row);
-    }
-    $t->param(CATEGORIES => \@categories);
+    my $sth = $dbh->prepare($select);
+    $sth->execute($id);
+    my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
     $t->param(DATETIME => $datetime);
     $t->param(NEWSBIT => $newsbit);
@@ -259,8 +235,25 @@ sub newsbitInterface {
     $t->param(PUBLISHED => $published);
     $t->param(NEWSBIT_URL => $newsbit_url);
     $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
+    $t->param(FILENAME => _getNewsbitFilename($title, $datetime));
     $t->param(ID => $id);
-    $t->param(ADD_OR_UPDATE => $add_or_update);
+    my @categories;
+    my $select = <<~"SQL";
+    SELECT name 
+    FROM news_categories
+    ORDER BY id
+    SQL
+    my $sth = $dbh->prepare($select);
+    $sth->execute();
+    while (my ($name) = $sth->fetchrow_array()) {
+        my %row;
+        if ( $name eq $newsbit_category ) { 
+            $row{SELECTED} = 1;
+        }
+        $row{CATEGORY} = $name;
+        push(@categories, \%row);
+    }
+    $t->param(CATEGORIES => \@categories);
     my $output = $t->output;
     print "Content-type:text/html\n\n";
     print $output;
@@ -293,7 +286,7 @@ sub newsletterInterface {
 
 =head2 publishRSS()
 
-TODO
+Create an RSS file with XML structured data for the latest newsbits.
 
 =cut
 
@@ -696,7 +689,11 @@ sub saveNewsletter {
 
 =head2 _getNewsbitFilename()
 
-TODO
+Given the title of the newsbit, return a string suitable for an HTML filename.
+
+    - characters are lowercased
+    - spaces are converted to dashes
+    - non-ASCII characters are removed
 
 =cut
 
@@ -709,9 +706,9 @@ sub _getNewsbitFilename {
         $filename =~ s/\s+/-/g;
         $filename =~ s/[^[a-zA-Z0-9_-]]*//g;
     }
-    else {
-        $filename  = $datetime;
-    }
+    # else {  # not sure we ever need this
+    #     $filename  = $datetime;
+    # }
     return "${filename}.html";
 }
 

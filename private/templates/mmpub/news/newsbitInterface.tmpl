@@ -1,22 +1,33 @@
-﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
+﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head>
 
-<body background="white">
+<body>
 
-<h2>Edit This Newsbit</h2>
-<br>
+<div style="float: left;">
+    <h2>Edit Newsbit <TMPL_IF DATETIME><a href="/news/archive/<TMPL_VAR FILENAME>" target="_blank">posted <TMPL_VAR DATETIME></a></TMPL_IF></h2>
+</div>
 
-<TMPL_VAR DATETIME><br><br>
+<div style="float: right;">
+    <a href="/private"><img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a>
+</div>
+<div style="clear: both;"></div>
 
-<form method="post" action="<TMPL_VAR SCRIPT_NAME>">
+<form method="post" action="<TMPL_VAR SCRIPT_NAME>" enctype="multipart/form-data">
 
+<select name="category" required>
+<option value="">select category...
 <TMPL_LOOP CATEGORIES>
-    <input type="radio" name="category" value="<TMPL_VAR CATEGORY>" <TMPL_VAR CHECKED>><TMPL_VAR CATEGORY>&nbsp;&nbsp;&nbsp;
+    <option value="<TMPL_VAR CATEGORY>" <TMPL_IF SELECTED>SELECTED</TMPL_IF>> <TMPL_VAR CATEGORY>
 </TMPL_LOOP>
+</select> &nbsp;&nbsp;&nbsp; 
+
+<input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published &nbsp;&nbsp;&nbsp; 
+
+&nbsp;&nbsp;&nbsp; 
+
+
 <br><br>
 
-Title: <input maxlength="255" size="50" type="text" name="title" value="<TMPL_VAR TITLE ESCAPE=HTML>" size="75"> &nbsp;&nbsp;&nbsp;
-
-<input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published
+Title: <input maxlength="255" size="50" type="text" name="title" value="<TMPL_VAR TITLE ESCAPE=HTML>" size="75" required> &nbsp;&nbsp;&nbsp;
 
 <br><br>
 
@@ -24,11 +35,11 @@ Newsbit URL: <input maxlength="255" type="text" name="newsbit_URL" value="<TMPL_
 
 Newsbit Image URL: <input maxlength="255" type="text" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
 
-<textarea name="newsbit" style="width: 80%; height: 450px;"><TMPL_VAR NEWSBIT></textarea><br><br>
+<textarea name="newsbit" style="width: 60%; height: 450px;" required><TMPL_VAR NEWSBIT></textarea><br><br>
 
 <input type="hidden" name="id" value="<TMPL_VAR ID>">
 <input type="hidden" name="action" value="saveNewsbit">
-<input type="submit" value="<TMPL_VAR ADD_OR_UPDATE> Newsbit">
+<input type="submit" value="<TMPL_IF ID>Update<TMPL_ELSE>Add</TMPL_IF> Newsbit">
 </form>
 <br>
 
