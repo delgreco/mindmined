@@ -128,7 +128,7 @@ sub deleteNewsbit {
     my $sql = <<~"SQL";
     DELETE FROM news WHERE id = ?
     SQL
-    my $rows_deleted = $IX::DB::dbh->do(qq{$sql}, undef, $id);
+    my $rows_deleted = $dbh->do(qq{$sql}, undef, $id);
     if ( $rows_deleted != 1 ) {
         print STDERR "ERROR: $rows_deleted rows deleted.";
     }
@@ -666,9 +666,9 @@ sub saveNewsbit {
         SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?
         WHERE id = ?
         SQL
-        my $rows_updated = $IX::DB::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $id);
+        my $rows_updated = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $id);
         if ( $rows_updated != 1 ) {
-            IX::Debug::log("ERROR: $rows_updated rows updated.");
+            print STDERR "ERROR: $rows_updated rows updated.\n";
         }
         $message = qq |Newsbit has been updated.  News pages have been refreshed.|;
     }
@@ -687,12 +687,12 @@ sub saveNewsbit {
         VALUES 
         (?, ?, ?, ?, ?, ?, ?, ?)
         SQL
-        my $rows_inserted = $IX::DB::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published);
+        my $rows_inserted = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published);
         if ( $rows_inserted != 1 ) {
-            IX::Debug::log("ERROR: $rows_inserted rows inserted.");
+            print STDERR "ERROR: $rows_inserted rows inserted.\n";
         }
         # grab the automatically incremented id that was generated
-        $id = $IX::DB::dbh->{mysql_insertid} || $IX::DB::dbh->{insertid};
+        $id = $dbh->{mysql_insertid} || $dbh->{insertid};
         $message = qq |Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.|;
     }
     refreshNews();
