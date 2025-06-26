@@ -35,8 +35,6 @@ my $dbh = DBI->connect(
     }
 ) || die "Connect failed: $DBI::errstr\n"; 
 
-use open qw( :std :encoding(UTF-8) );
-
 HTML::Template->config(utf8 => 1);
 
 my $debug = 0;
@@ -44,7 +42,7 @@ my $debug = 0;
 my $cgiobject = new CGI;
 my $action=$cgiobject->param("action");
 
-if ( $ARGV[0] eq "--refresh" ) {
+if ( @ARGV && $ARGV[0] eq "--refresh" ) {
     # when called this way, we need to manually define doc root
     $ENV{DOCUMENT_ROOT} = "$ENV{HOME}/www";
     open(LOG, ">> $ENV{HOME}/cron.log");
@@ -241,12 +239,12 @@ sub newsbitInterface {
     $t->param(FILENAME => _getNewsbitFilename($title, $datetime));
     $t->param(ID => $id);
     my @categories;
-    my $select = <<~"SQL";
+    $select = <<~"SQL";
     SELECT name 
     FROM news_categories
     ORDER BY id
     SQL
-    my $sth = $dbh->prepare($select);
+    $sth = $dbh->prepare($select);
     $sth->execute();
     while (my ($name) = $sth->fetchrow_array()) {
         my %row;
@@ -408,7 +406,7 @@ sub refreshAudioIndex {
 
 =head2 refreshGalleryIndex
 
-TODO
+Refresh the gallery index page to assure inclusion of latest gallery news items.
 
 =cut
 
@@ -425,7 +423,7 @@ sub refreshGalleryIndex {
     ORDER BY datetime DESC
     SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     while (my ($newsbit, $newsbit_url, $newsbit_image_url, $datetime) = $sth->fetchrow_array()) {
         my %row;
         $counter++;
@@ -448,12 +446,11 @@ sub refreshGalleryIndex {
 
 =head2 refreshIndex
 
-TODO
+Keep home page piping hot with news.
 
 =cut
 
 sub refreshIndex {
-    # keep index page piping hot with news
     my $t = HTML::Template->new(filename => 'templates/index.tmpl');
     my $select = <<~"SQL";
     SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(datetime)
@@ -543,7 +540,7 @@ sub refreshLibraryIndex {
 
 =head2 refreshNews
 
-TODO
+Main routine that calls all the others to refresh news content across the site.
 
 =cut
 
@@ -575,17 +572,17 @@ Refresh the list of news items at C<news/index.html>.
 sub refreshNewsIndex {
     my $template = HTML::Template->new(filename => 'templates/news/index.tmpl');
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(`datetime`) 
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, 
+    news_categories.icon_image_url, datetime, MONTHNAME(`datetime`), published
     FROM news
     LEFT JOIN news_categories
     ON news_categories.name = news.category
-    WHERE published = 1
     ORDER BY datetime DESC
     SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my $counter = 0; my @newsbits;
-    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url,  $category_icon_url, $datetime, $month) = $sth->fetchrow_array()) {
+    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url,  $category_icon_url, $datetime, $month, $published) = $sth->fetchrow_array()) {
         my %row;
         $counter++;
         my $monthnum = substr($datetime, 5, 2);
@@ -604,10 +601,8 @@ sub refreshNewsIndex {
         my $datetime = "${month} ${day}, ${year}";
         $row{NEWSBIT_DATETIME} = $datetime;
         $row{FILENAME} = $filename;
-        push(@newsbits, \%row);
-        ###
-        # make the archive page
-        ###
+        push(@newsbits, \%row) if $published;
+        # make news archive page, regardless of 'published'
         my $t = HTML::Template->new(filename => 'templates/news/article.tmpl');
         $t->param(NEWSBIT => $newsbit);
         $t->param(NEWSBIT_DATETIME => $datetime);
@@ -629,7 +624,9 @@ sub refreshNewsIndex {
 
 =head2 saveNewsbit()
 
-TODO
+Add or update a newsbit.
+
+Optionally, upload an image file.  This image will be saved in C<news_images/> directory and the URL will be noted in the newsbit record.  Alternately, the Newsbit Image URL field can be used for an already hosted image.
 
 =cut
 
@@ -638,28 +635,44 @@ sub saveNewsbit {
     my $published=$cgiobject->param('published');
     my $newsbit=$cgiobject->param('newsbit');
     my $newsbit_URL=$cgiobject->param('newsbit_URL');
-    my $newsbit_image=$cgiobject->param('newsbit_image');
+    my $image=$cgiobject->param('image');
     my $newsbit_image_URL=$cgiobject->param('newsbit_image_URL');
     my $category=$cgiobject->param('category'); 
     my $id=$cgiobject->param('id'); 
     $published = $published ? 1 : 0;
     my $message;
-    # # prevent duplicate filenames/overwrites
-    # for ( my $count = 1; -e "attachments/$final_filename"; $count++ ) {
-    #     $final_filename = $count . '_' . $filename;
-    # }
-    # open (UPLOADFILE, "> attachments/$final_filename") or die "$!";
-    # binmode UPLOADFILE;
-    # if ( $contents ) {
-    #     print UPLOADFILE $contents;
-    # }
-    # else {
-    #     while(<$newsbit_image>) {
-    #         print UPLOADFILE;
-    #         $contents .= $_;
-    #     }
-    # }
-    # close UPLOADFILE;
+    if ( $image ) {
+        my $image_dir = "$ENV{DOCUMENT_ROOT}/news_images";
+        my $final_filename = ''; my $contents = '';
+        my $filename = $image;
+        print STDERR "Filename: '$filename'\n";
+        $filename =~ s/\s+/_/g;  # substitute whitespaces with underscores
+        $filename =~ s/        # substitute...
+                    [^\w\.]    # characters which are NOT: "word" characters or periods
+                    /_/xg;     # ...with an underscore
+        if ( $filename =~ /(.*)/ ) {  # for taint.
+            $filename = $1;
+        }
+        # # prevent duplicate filenames/overwrites
+        for ( my $count = 1; -e "$image_dir/$final_filename"; $count++ ) {
+            $final_filename = $count . '_' . $filename;
+        }
+        open (UPLOADFILE, "> $image_dir/$final_filename") or die "$image_dir/$final_filename $!";
+        binmode UPLOADFILE;
+        if ( $contents ) {
+            print UPLOADFILE $contents;
+        }
+        else {
+            my $fh = $cgiobject->param('image');
+            while( <$fh> ) {
+                print UPLOADFILE;
+                $contents .= $_;
+            }
+        }
+        close UPLOADFILE;
+        # a new upload overwrites any existing newsbit image URL
+        $newsbit_image_URL = "https://mindmined.com/news_images/$final_filename";
+    }
     if ( $id ) {  # update existing item
         my $sql = <<~"SQL";
         UPDATE news 

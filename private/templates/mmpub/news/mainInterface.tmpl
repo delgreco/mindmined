@@ -1,6 +1,6 @@
 <TMPL_INCLUDE NAME="../../standard_head.tmpl"></head>
 
-<body background="white">
+<body>
 
 <font color="red"><TMPL_VAR MESSAGE></font>
 
@@ -35,32 +35,32 @@ Select newsletter to edit...<br>
 </form></td>
 <td align="left"><form action="<TMPL_VAR SCRIPT_NAME>" method="post">
 Assemble Newsletter from Pending News<br><select name="month">
-<option value="January" SELECTED>January
-<option value="February">February
-<option value="March">March 
-<option value="April">April 
-<option value="May">May 
-<option value="June">June 
-<option value="July">July
-<option value="August">August 
-<option value="September">September 
-<option value="October">October
-<option value="November">November
-<option value="December">December
+    <option value="January" SELECTED>January
+    <option value="February">February
+    <option value="March">March 
+    <option value="April">April 
+    <option value="May">May 
+    <option value="June">June 
+    <option value="July">July
+    <option value="August">August 
+    <option value="September">September 
+    <option value="October">October
+    <option value="November">November
+    <option value="December">December
 </select>        
 <select name="year">
-<option value="2003" SELECTED>2003<option value="2004">2004 <option value="2005">2005 
-<option value="2006">2006<option value="2007">2007 <option value="2008">2008 
-<option value="2009">2009<option value="2010">2010<option value="2011">2011
-<option value="2012">2012<option value="2013">2013 <option value="2014">2014 
-<option value="2015">2015<option value="2016">2016<option value="2017">2017 
-<option value="2018">2018<option value="2019">2019<option value="2020">2020
-<option value="2021">2021
+    <option value="2003" SELECTED>2003<option value="2004">2004 <option value="2005">2005 
+    <option value="2006">2006<option value="2007">2007 <option value="2008">2008 
+    <option value="2009">2009<option value="2010">2010<option value="2011">2011
+    <option value="2012">2012<option value="2013">2013 <option value="2014">2014 
+    <option value="2015">2015<option value="2016">2016<option value="2017">2017 
+    <option value="2018">2018<option value="2019">2019<option value="2020">2020
+    <option value="2021">2021
 </select> issue #: <input type="text" name="number" size="2"> 
 <input type="hidden" name="action" value="assembleNewsletter">
 <input type="submit" value="Assemble Newsletter"></form></td>
-<td align="right"><a href="<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface">
-<img src="/images/plus_transparent.gif" hspace="4" border="0" align="absmiddle" height="20" width="20">Add News Item</a>
+<td align="right">
+<button onClick="location='<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface';">Add News Item</button>
 </td>
 </tr>
 </table>

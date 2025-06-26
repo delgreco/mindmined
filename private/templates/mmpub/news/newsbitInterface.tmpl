@@ -1,4 +1,15 @@
-﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl"></head>
+﻿<TMPL_INCLUDE NAME="../../standard_head.tmpl">
+
+<script>
+
+function toggleURLField(fileInput) {
+    const urlField = document.getElementById("newsbit_image_URL");
+    urlField.disabled = fileInput.files.length > 0;
+}
+
+</script>
+
+</head>
 
 <body>
 
@@ -7,7 +18,7 @@
 </div>
 
 <div style="float: right;">
-    <a href="/private"><img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a>
+    <a href="/cgi-bin/private/news.cgi"><img src="/images/logo_transparent.gif" alt="Mind Mined News Publisher Home" border=0></a>
 </div>
 <div style="clear: both;"></div>
 
@@ -33,9 +44,9 @@ Title: <input maxlength="255" size="50" type="text" name="title" value="<TMPL_VA
 
 Newsbit URL: <input maxlength="255" type="text" name="newsbit_URL" value="<TMPL_VAR NEWSBIT_URL>" size="100"><br><br>
 
-Newsbit Image: <input type="file" name="newsbit_image"><br><br>
+Newsbit Image: <input type="file" name="image" onChange="toggleURLField(this);"><br><br>
 
-Newsbit Image URL: <input maxlength="255" type="text" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
+Newsbit Image URL: <input maxlength="255" type="text" id="newsbit_image_URL" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
 
 <textarea name="newsbit" style="width: 60%; height: 450px;" required><TMPL_VAR NEWSBIT></textarea><br><br>
 
