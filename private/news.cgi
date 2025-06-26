@@ -105,37 +105,40 @@ sub assembleNewsletter {
     mainInterface($message);
 }
 
-
 =head2 deleteNewsbit()
 
-TODO
+Given the id for a newsbit, delete it.
 
 =cut
 
 sub deleteNewsbit {
     my $id=$cgiobject->param('id'); 
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT newsbit 
     FROM news 
     WHERE id = ?
-SQL
+    SQL
     my $sth = $dbh->prepare($select);
     $sth->execute($id);
     my ($newsbit) = $sth->fetchrow_array();
     # keep it short
     $newsbit = substr($newsbit, 0, 20);
-    $newsbit .= qq {...};
+    $newsbit .= '...';
     # delete the entry
-    my $delete="DELETE FROM news WHERE id = ?";
-    $sth = $dbh->prepare($delete);
-    $sth->execute($id);
-    my $message = qq {$newsbit deleted from the database.};
+    my $sql = <<~"SQL";
+    DELETE FROM news WHERE id = ?
+    SQL
+    my $rows_deleted = $IX::DB::dbh->do(qq{$sql}, undef, $id);
+    if ( $rows_deleted != 1 ) {
+        print STDERR "ERROR: $rows_deleted rows deleted.";
+    }
+    my $message = "$newsbit deleted from the database.";
     mainInterface($message);
 }
 
 =head2 mainInterface()
 
-TODO
+The administrative list view of newsbits.
 
 =cut
 
@@ -222,7 +225,7 @@ sub newsbitInterface {
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsbitInterface.tmpl');
     my $select = <<~"SQL";
     SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, published
-    FROM news 
+    FROM news
     WHERE id = ?
     SQL
     my $sth = $dbh->prepare($select);
@@ -261,7 +264,7 @@ sub newsbitInterface {
 
 =head2 newsletterInterface()
 
-TODO
+Screen to add or edit a newsletter.
 
 =cut
 
@@ -304,24 +307,26 @@ sub publishRSS {
     $dayofmonth = "0$dayofmonth" if (length $dayofmonth == 1);
     $monthname = substr($monthname, 0, 3);
     # contruct channel section
-    my $xml = qq 
-|<?xml version="1.0" encoding="UTF-8"?> 
-<rss version="2.0">
-<channel>
-<title>Mind Mined Productions</title>
-<link>https://www.mindmined.com</link>
-<description>News about additions to our independent arts archive.</description>
-<pubDate>$dayname, $dayofmonth $monthname $year $time GMT</pubDate>
-<generator>The Mind Mined Publisher</generator>
-<language>en</language>|;
+    my $xml = <<~"XML";
+    <?xml version="1.0" encoding="UTF-8"?> 
+    <rss version="2.0">
+    <channel>
+    <title>Mind Mined Productions</title>
+    <link>https://www.mindmined.com</link>
+    <description>News about additions to our independent arts archive.</description>
+    <pubDate>$dayname, $dayofmonth $monthname $year $time GMT</pubDate>
+    <generator>The Mind Mined Publisher</generator>
+    <language>en</language>
+    XML
     # loop through and replace custom tags with values fetched from database
     my $select_newsbit = <<"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, datetime, YEAR(datetime), DAYOFMONTH(datetime), DAYNAME(datetime), MONTHNAME(datetime), DATE_FORMAT(datetime, '%H:%i:%s') 
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, datetime, 
+    YEAR(datetime), DAYOFMONTH(datetime), DAYNAME(datetime), MONTHNAME(datetime), DATE_FORMAT(datetime, '%H:%i:%s') 
     FROM news 
     ORDER BY datetime DESC
 SQL
     $sth = $dbh->prepare($select_newsbit);
-    $sth->execute() || die "sth->execute($select_newsbit): $DBI::errstr\n";
+    $sth->execute();
     my $counter = 0;
     while (my ($newsbit, $title, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $year, $dayofmonth, $dayname, $monthname, $time) = $sth->fetchrow_array()) {
         $counter++;
@@ -330,7 +335,8 @@ SQL
         $dayname = substr($dayname, 0, 3);
         $dayofmonth = "0$dayofmonth" if (length $dayofmonth == 1);
         $monthname = substr($monthname, 0, 3);
-        # get a title by trucating the longish newsbit - I guess this is the best we can do unless we start using titles or headlines in the news table
+        # get a title by trucating the longish newsbit...
+        # I guess this is the best we can do unless we start using titles or headlines in the news table
         #my $title = substr($newsbit, 0, 75);
         #$title .= '...';
         # get groovey 12.25.2005 format
@@ -339,19 +345,21 @@ SQL
         my $year = substr($datetime, 0, 4);
         my $groovy_date = qq {$month\.$day\.$year};
         my $filename = _getNewsbitFilename($title, $datetime);
-        $xml .= qq
-|<item>
-<title>$title</title>
-<link>https://www.mindmined.com/news/archive/$filename</link>
-<description><![CDATA[<a href="https://www.mindmined.com/news/archive/$filename">$groovy_date</a> - $newsbit ]]></description>
-<pubDate>$dayname, $dayofmonth $monthname $year $time CST</pubDate>
-<category>$category</category>
-<guid>$newsbit_URL</guid>
-</item>|;
+        $xml .= <<~"XML";
+        <item>
+        <title>$title</title>
+        <link>https://www.mindmined.com/news/archive/$filename</link>
+        <description><![CDATA[<a href="https://www.mindmined.com/news/archive/$filename">$groovy_date</a> - $newsbit ]]></description>
+        <pubDate>$dayname, $dayofmonth $monthname $year $time CST</pubDate>
+        <category>$category</category>
+        <guid>$newsbit_URL</guid>
+        </item>
+        XML
     }
-    $xml .= qq |
-</channel>
-</rss>|;
+    $xml .= <<~"XML";
+    </channel>
+    </rss>
+    XML
     my $file = "$ENV{DOCUMENT_ROOT}/news.xml";
     open my $feedpage, '>:encoding(utf8)', $file;
     print $feedpage "$xml";
@@ -550,8 +558,7 @@ sub refreshNews {
     my $datetime = `date`;
     chomp($datetime);
     if ($command_line_call) {
-        print LOG qq |$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.
-| if $debug;
+        print LOG "$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.\n" if $debug;
     }
     else {
         my $message = qq |News has been refreshed at news/, library/, audio/, and gallery/.  RSS Feed also refreshed.|;
@@ -626,41 +633,67 @@ TODO
 
 =cut
 
-sub saveNewsbit {  
-    my $title=$cgiobject->param('title'); 
-    my $published=$cgiobject->param('published'); 
-    my $newsbit=$cgiobject->param('newsbit'); 
-    my $newsbit_URL=$cgiobject->param('newsbit_URL'); 
-    my $newsbit_image_URL=$cgiobject->param('newsbit_image_URL'); 
+sub saveNewsbit {
+    my $title=$cgiobject->param('title');
+    my $published=$cgiobject->param('published');
+    my $newsbit=$cgiobject->param('newsbit');
+    my $newsbit_URL=$cgiobject->param('newsbit_URL');
+    my $newsbit_image=$cgiobject->param('newsbit_image');
+    my $newsbit_image_URL=$cgiobject->param('newsbit_image_URL');
     my $category=$cgiobject->param('category'); 
     my $id=$cgiobject->param('id'); 
     $published = $published ? 1 : 0;
     my $message;
-    if ($id) {  # update existing item
-        my $update="UPDATE news SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?
-        WHERE id = ?";
-        my $sth = $dbh->prepare($update);
-        $sth->execute($title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
-        $sth->finish();
+    # # prevent duplicate filenames/overwrites
+    # for ( my $count = 1; -e "attachments/$final_filename"; $count++ ) {
+    #     $final_filename = $count . '_' . $filename;
+    # }
+    # open (UPLOADFILE, "> attachments/$final_filename") or die "$!";
+    # binmode UPLOADFILE;
+    # if ( $contents ) {
+    #     print UPLOADFILE $contents;
+    # }
+    # else {
+    #     while(<$newsbit_image>) {
+    #         print UPLOADFILE;
+    #         $contents .= $_;
+    #     }
+    # }
+    # close UPLOADFILE;
+    if ( $id ) {  # update existing item
+        my $sql = <<~"SQL";
+        UPDATE news 
+        SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?
+        WHERE id = ?
+        SQL
+        my $rows_updated = $IX::DB::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $id);
+        if ( $rows_updated != 1 ) {
+            IX::Debug::log("ERROR: $rows_updated rows updated.");
+        }
         $message = qq |Newsbit has been updated.  News pages have been refreshed.|;
     }
     else {   # new item
-        # get the current datetime
-        my $select="SELECT NOW()";
+        my $select = <<~"SQL";
+        SELECT NOW()
+        SQL
         my $sth = $dbh->prepare($select);
-        $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+        $sth->execute();
         my ($datetime) = $sth->fetchrow_array();
         # set newsletter status to 'pending'
         my $newsletter_status = 'pending';
-        my $insert="INSERT INTO news 
+        my $sql = <<~"SQL";
+        INSERT INTO news 
         (newsbit_title, newsbit, newsbit_URL, newsbit_image_URL, category, datetime, newsletter_status, published) 
         VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?)";
-        $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
-        $sth->execute($title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published) || die "execute: $insert: $DBI::errstr";
+        (?, ?, ?, ?, ?, ?, ?, ?)
+        SQL
+        my $rows_inserted = $IX::DB::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published);
+        if ( $rows_inserted != 1 ) {
+            IX::Debug::log("ERROR: $rows_inserted rows inserted.");
+        }
         # grab the automatically incremented id that was generated
-        $id = $sth->{mysql_insertid} || $sth->{insertid}; 
-        $message = qq {Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.};
+        $id = $IX::DB::dbh->{mysql_insertid} || $IX::DB::dbh->{insertid};
+        $message = qq |Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.|;
     }
     refreshNews();
     mainInterface($message);
