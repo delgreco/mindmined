@@ -11,6 +11,7 @@ use lib qw (
 
 use CGI;
 use DBI;
+use HTML::Entities;
 use HTML::Template;
 use Dotenv -load;
 
@@ -272,7 +273,7 @@ sub newsletterInterface {
     my $select = <<~"SQL";
     SELECT month, year, body 
     FROM newsletters 
-    WHERE number = ?
+    WHERE `number` = ?
     SQL
     my $sth = $dbh->prepare($select);
     $sth->execute($number);
@@ -307,7 +308,7 @@ sub publishRSS {
     # contruct channel section
     my $xml = <<~"XML";
     <?xml version="1.0" encoding="UTF-8"?> 
-    <rss version="2.0">
+    <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
     <title>Mind Mined Productions</title>
     <link>https://www.mindmined.com</link>
@@ -315,14 +316,17 @@ sub publishRSS {
     <pubDate>$dayname, $dayofmonth $monthname $year $time GMT</pubDate>
     <generator>The Mind Mined Publisher</generator>
     <language>en</language>
+    <atom:link href="https://www.mindmined.com/news.xml" rel="self" type="application/rss+xml" />
     XML
     # loop through and replace custom tags with values fetched from database
-    my $select_newsbit = <<"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, datetime, 
-    YEAR(datetime), DAYOFMONTH(datetime), DAYNAME(datetime), MONTHNAME(datetime), DATE_FORMAT(datetime, '%H:%i:%s') 
+    my $select_newsbit = <<~"SQL";
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, 
+    YEAR(`datetime`), DAYOFMONTH(`datetime`), DAYNAME(`datetime`), MONTHNAME(`datetime`), 
+    DATE_FORMAT(`datetime`, '%H:%i:%s') 
     FROM news 
-    ORDER BY datetime DESC
-SQL
+    WHERE published = 1
+    ORDER BY `datetime` DESC
+    SQL
     $sth = $dbh->prepare($select_newsbit);
     $sth->execute();
     my $counter = 0;
@@ -343,14 +347,18 @@ SQL
         my $year = substr($datetime, 0, 4);
         my $groovy_date = qq {$month\.$day\.$year};
         my $filename = _getNewsbitFilename($title, $datetime);
+        $title = encode_entities($title);
+        # $newsbit = encode_entities($newsbit);
+        my $local_url = "https://www.mindmined.com/news/archive/$filename";
+        # $newsbit_URL = $local_url unless $newsbit_URL;
         $xml .= <<~"XML";
         <item>
         <title>$title</title>
         <link>https://www.mindmined.com/news/archive/$filename</link>
-        <description><![CDATA[<a href="https://www.mindmined.com/news/archive/$filename">$groovy_date</a> - $newsbit ]]></description>
-        <pubDate>$dayname, $dayofmonth $monthname $year $time CST</pubDate>
+        <description><![CDATA[<a href="$local_url">$groovy_date</a> - $newsbit ]]></description>
+        <pubDate>$dayname, $dayofmonth $monthname $year $time EST</pubDate>
         <category>$category</category>
-        <guid>$newsbit_URL</guid>
+        <guid>$local_url</guid>
         </item>
         XML
     }
@@ -366,7 +374,7 @@ SQL
 
 =head2 refreshAudioIndex
 
-TODO
+Refresh the Audio Funhouse homepage with the latest audio newsbits.
 
 =cut
 
@@ -498,7 +506,7 @@ sub refreshIndex {
 
 =head2 refreshLibraryIndex
 
-TODO
+Refresh the Public Library homepage with the latest library news items.
 
 =cut
 
@@ -724,10 +732,14 @@ sub saveNewsletter {
     my $year=$cgiobject->param('year'); 
     my $body=$cgiobject->param('body'); 
     my $message;
-    my $update="UPDATE newsletters SET body = ? 
-    WHERE number = ?";
-    my $sth = $dbh->prepare($update);
-    $sth->execute($body, $number) || die "sth->execute($update): $DBI::errstr\n";
+    my $sql = <<~"SQL";
+    UPDATE newsletters SET body = ? 
+    WHERE `number` = ?
+    SQL
+    my $rows_updated = $dbh->do(qq{$sql}, undef, $body, $number);
+    if ( $rows_updated != 1 ) {
+        print STDERR "ERROR: $rows_updated rows updated.\n";
+    }
     $message = 'Newsletter updated.';
     refreshNews();
     mainInterface($message);

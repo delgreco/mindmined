@@ -19,7 +19,7 @@
             <TMPL_VAR NEWSBIT>
             </p>
             <TMPL_IF NEWSBIT_IMAGE_URL>
-                <TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF>
+                <figure style="margin-top: 0px;"><a href="<TMPL_VAR NEWSBIT_URL>" target="_blank"><img src="<TMPL_VAR NEWSBIT_IMAGE_URL>" alt="<TMPL_VAR CAPTION>" style="max-width: 100%;"></a><TMPL_IF CAPTION><figcaption><TMPL_VAR CAPTION></figcaption></TMPL_IF></figure>
             </TMPL_IF>
             <TMPL_IF NEWSBIT_URL>
                 <br><br>
