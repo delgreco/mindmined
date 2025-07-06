@@ -135,13 +135,19 @@ sub deleteSong {
     mainInterface($message);
 }
 
+=head2 mainInterface
+
+TODO
+
+=cut
+
 sub mainInterface { 
     my $message = $_[0];
     my $songbook_id = $_[1];
     $songbook_id=$cgiobject->param('songbook_id') if ! $songbook_id;
     my $t = HTML::Template->new(filename => 'templates/songs/songsMainInterface.tmpl');
     my $where; my @bind_variables;
-    if ($songbook_id) {
+    if ( $songbook_id ) {
         $where = "WHERE songs_songbooks.songbook_id = ?";
         push(@bind_variables, $songbook_id);
     }
@@ -170,12 +176,13 @@ sub mainInterface {
         $row{TITLE} = $title;
         $row{CREDITS} = $credits;
         $row{ID} = $id;
+        $row{SONGBOOK_ID} = $songbook_id;
         $row{MORE_INFO_URL} = $more_info_url;
         $row{AUDIO_URL} = $audio_url;
         $row{CHORDSHEET} = $chordsheet;
         # $row{SONGBOOK_ID} = $songbook_id;
         # $row{SONGBOOK} = $songbook;
-        if ($i % 2 == 0) {
+        if ( $i % 2 == 0 ) {
             $bgcolor = qq {#CCCCCC};
         }
         else { 
@@ -184,7 +191,6 @@ sub mainInterface {
         $row{BGCOLOR} = $bgcolor;
         push(@songs, \%row);
     }
-    $sth->finish();
     $t = _getSongsTopTemplate(
         template    => $t,
         songbook_id => $songbook_id,
@@ -202,6 +208,12 @@ sub mainInterface {
     print "Content-type:text/html\n\n";
     print $output;
 }
+
+=head2 removeFromSongbook
+
+TODO
+
+=cut
 
 sub removeFromSongBook {
     my $song_id=$cgiobject->param('song_id'); 
@@ -226,6 +238,12 @@ sub removeFromSongBook {
     $message = qq |Song removed from SongBook.|;
     mainInterface($message, $songbook_id);
 }
+
+=head2 setListInterface
+
+TODO
+
+=cut
 
 sub setlistInterface {
     my $setlist = $_[0];
@@ -337,8 +355,13 @@ SQL
     print $output;
 }
 
+=head2 saveSong
+
+TODO
+
+=cut
+
 sub saveSong {
-    # grab the values submitted
     my $title=$cgiobject->param("title"); 
     my $credits=$cgiobject->param("credits"); 
     my $more_info_url=$cgiobject->param("more_info_url"); 
@@ -368,8 +391,13 @@ sub saveSong {
     mainInterface($message, $songbook_id);
 }
 
+=head2 saveSongbook
+
+TODO
+
+=cut
+
 sub saveSongbook {
-    # grab the values submitted
     my $name=$cgiobject->param('name'); 
     my $id=$cgiobject->param('id'); 
     my $message;
@@ -392,6 +420,12 @@ sub saveSongbook {
     }
     mainInterface($message, $id);
 }
+
+=head2 songInterface
+
+TODO
+
+=cut
 
 sub songInterface { 
     my $message = $_[0];
@@ -425,17 +459,24 @@ SQL
     print $output;
 }
 
+=head2 songbookInterface
+
+TODO
+
+=cut
+
 sub songbookInterface { 
     my $message = $_[0];
     my $id=$cgiobject->param('id'); 
     my $template = HTML::Template->new(filename => 'templates/songs/songbookInterface.tmpl');
-    my $select="SELECT name 
+    my $select = <<~"SQL";
+    SELECT name 
     FROM songbooks 
-    WHERE id = ?";
+    WHERE id = ?
+    SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute($id) || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute($id);
     my ($name) = $sth->fetchrow_array();
-    $sth->finish();
     $template->param(NAME => $name);
     $template->param(ID => $id);
     $template->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
@@ -448,36 +489,48 @@ sub songbookInterface {
     print $output;
 }
 
+=head2 viewSong
+
+TODO
+
+=cut
+
 sub viewSong {
     my $id=$cgiobject->param('id'); 
     # so we can return to the songbook we were looking at
     my $songbook_id=$cgiobject->param('songbook_id');
-    my $template = HTML::Template->new(filename => 'templates/songs/viewSong.tmpl');
-    my $select="SELECT title, credits, more_info_url, audio_url, chordsheet
+    my $t = HTML::Template->new(filename => 'templates/songs/viewSong.tmpl');
+    my $select = <<~"SQL";
+    SELECT title, credits, more_info_url, audio_url, chordsheet
     FROM songs 
-    WHERE id = ?";
+    WHERE id = ?
+    SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute($id) || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute($id);
     my ($title, $credits, $more_info_url, $audio_url, $chordsheet) = $sth->fetchrow_array();
-    $template->param(TITLE => $title);
-    $template->param(PAGETITLE => "$title ($credits)");
-    $template->param(CREDITS => $credits);
-    $template->param(MORE_INFO_URL => $more_info_url);
-    $template->param(AUDIO_URL => $audio_url);
+    $t->param(TITLE => $title);
+    $t->param(PAGETITLE => "$title ($credits)");
+    $t->param(CREDITS => $credits);
+    $t->param(MORE_INFO_URL => $more_info_url);
+    $t->param(AUDIO_URL => $audio_url);
     # replace line breaks with <br>
     #$chordsheet =~ s/\n/<br>/g;
-    $template->param(CHORDSHEET => $chordsheet);
-    $template->param(ID => $id);
-    $template->param(SONGBOOK_ID => $songbook_id);
-    #$template->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
-    my $output = $template->output;
+    $t->param(CHORDSHEET => $chordsheet);
+    $t->param(ID => $id);
+    $t->param(SONGBOOK_ID => $songbook_id);
+    #$t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
+    my $output = $t->output;
     print "Content-type:text/html\n\n";
     print $output;  
 }
 
-###############
-# internal subs
-###############
+=head1 INTERNAL SUBS
+
+=head2 _downgradeSong
+
+TODO
+
+=cut
 
 sub _downgradeSong {
     my $song_id = $_[0]; 
@@ -493,6 +546,12 @@ sub _downgradeSong {
     my $message = qq {Song has been downgraded.};
     setlistInterface($setlist, $message);
 }
+
+=head2 _getAddSongsDropdown
+
+TODO
+
+=cut
 
 sub _getAddSongsDropdown {
     my $template = $_[0];
@@ -520,14 +579,22 @@ sub _getAddSongsDropdown {
     return $template;
 }
 
+=head2 _getSongBookDropdown
+
+TODO
+
+=cut
+
 sub _getSongBookDropdown {
     my $template = $_[0];
     my $songbook_id = $_[1];
-    my $select="SELECT name, id 
+    my $select = <<~"SQL";
+    SELECT name, id 
     FROM songbooks 
-    ORDER BY name";
+    ORDER BY name
+    SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my @songbooks;
     while (my ($name, $id) = $sth->fetchrow_array()) {
         my %row;
@@ -538,10 +605,15 @@ sub _getSongBookDropdown {
         $row{ID} = $id;
         push(@songbooks, \%row);
     }
-    $sth->finish();
     $template->param(SONGBOOKS => \@songbooks);
     return $template;
 }
+
+=head2 _getSongBookName
+
+TODO
+
+=cut
 
 sub _getSongBookName {
     my $songbook_id = $_[0];
@@ -556,41 +628,66 @@ sub _getSongBookName {
     return $name;
 }
 
+=head2 _getSongBookSongIDs
+
+TODO
+
+=cut
+
 sub _getSongBookSongIDs {
     my $songbook_id = $_[0];
-    my $select="SELECT id 
+    my $select = <<~"SQL";
+    SELECT id 
     FROM songs
     JOIN songs_songbooks
     ON songs_songbooks.song_id = songs.id
     WHERE songs_songbooks.songbook_id = ?
-    ORDER BY songs.title";
+    ORDER BY songs.title
+    SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute($songbook_id) || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute($songbook_id);
     my @song_ids;
     while (my ($id) = $sth->fetchrow_array()) {
         push(@song_ids, $id);
     }
-    $sth->finish();
     return @song_ids;
 }
+
+=head2 _getSongsTopTemplate
+
+TODO
+
+=cut
 
 sub _getSongsTopTemplate {
     my %arg = @_;
     my $template = $arg{template};
     my $songbook_id = $arg{songbook_id};
-    # populate songbook dropdowns
     $template = _getSongBookDropdown($template, $songbook_id);  
     return $template;
 }
 
+=head2 _getToday
+
+TODO
+
+=cut
+
 sub _getToday {
-    my $select="SELECT DAYOFMONTH(NOW()), MONTHNAME(NOW()), YEAR(NOW())";
+    my $select = <<~"SQL";
+    SELECT DAYOFMONTH(NOW()), MONTHNAME(NOW()), YEAR(NOW())
+    SQL
     my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my ($day_of_month, $month, $year) = $sth->fetchrow_array();
-    $sth->finish();
     return($day_of_month, $month, $year);
 }
+
+=head2 _upgradeSong
+
+TODO
+
+=cut
 
 sub _upgradeSong {
     my $song_id = $_[0];

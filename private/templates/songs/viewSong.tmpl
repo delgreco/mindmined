@@ -1,18 +1,18 @@
 ﻿<TMPL_INCLUDE NAME="songsHeader.tmpl">
 
-<div style="float: left;">
-    <p class="title"><TMPL_VAR NAME=TITLE></p>
-    <p class="credits"><TMPL_VAR NAME=CREDITS></p>
+<div style="float: left; margin-right: 100px;">
+    <p class="title"><TMPL_VAR TITLE></p>
+    <p class="credits"><TMPL_VAR CREDITS></p>
 </div>
 
 <div style="float: left;" id="print_button">
 
 </div>
 
-<div style="float: right; text-align: right;" id="textsize_chooser">
+<div style="float: left;" id="textsize_chooser">
     <span id="audio_url">
-    <TMPL_IF NAME=AUDIO_URL>
-        <a href="<TMPL_VAR NAME=AUDIO_URL>"><img src="/images/icon_sound.gif" border="0" align="absmiddle" hspace="8" alt="listen to a recording of this song"></a>
+    <TMPL_IF AUDIO_URL>
+        <a href="<TMPL_VAR AUDIO_URL>"><img src="/images/icon_sound.gif" border="0" align="absmiddle" hspace="8" alt="listen to a recording of this song"></a>
     </TMPL_IF>
     </span>
     Text Size: 
@@ -24,17 +24,20 @@
     <br><br>
     <input type="button" value="print" onClick="printSong();">
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <a href="/cgi-bin/private/songs.cgi?action=songInterface&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>"><button>edit this song</button></a>
+    <a href="/cgi-bin/private/songs.cgi?action=songInterface&id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID>"><button>edit this song</button></a>
 </div>
 
+<div style="float: right; text-align: right;">
+   <a href="/cgi-bin/private/songs.cgi?action=mainInterface&songbook_id=<TMPL_VAR SONGBOOK_ID>" target="_blank"><img src="https://www.mindmined.com/images/logo_transparent.gif"></a>
+</div>
 
 <div style="clear: both;"></div>
 <br>
 
-<div style="white-space: pre; font-family: monospace;" id="chordsheet"><TMPL_VAR NAME=CHORDSHEET></div>
+<div style="white-space: pre; font-family: monospace;" id="chordsheet"><TMPL_VAR CHORDSHEET></div>
 
 
-<!-- <TMPL_VAR NAME=MORE_INFO_URL> -->
+<!-- <TMPL_VAR MORE_INFO_URL> -->
 
 
 <TMPL_INCLUDE NAME="songsFooter.tmpl">

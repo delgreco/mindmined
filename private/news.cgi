@@ -407,7 +407,7 @@ sub refreshAudioIndex {
     $t->param(NEWSBITS => \@newsbits);
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
-    open(AUDIO_INDEX, "> $ENV{DOCUMENT_ROOT}/audio/index.html");
+    open(AUDIO_INDEX, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/audio/index.html") or die $!;
     print AUDIO_INDEX "$output";
     close AUDIO_INDEX;
 }
@@ -447,7 +447,7 @@ sub refreshGalleryIndex {
     }
     $t->param(NEWSBITS => \@newsbits);
     my $output = $t->output;
-    open(GALLERY_INDEX, "> $ENV{DOCUMENT_ROOT}/gallery/index.html");
+    open(GALLERY_INDEX, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/gallery/index.html") or die $!;
     print GALLERY_INDEX "$output";
     close GALLERY_INDEX;
 }
@@ -541,7 +541,7 @@ sub refreshLibraryIndex {
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
     my $library_index = "$ENV{DOCUMENT_ROOT}/public_library/index.html";
-    open(LIBRARY_INDEX, "> $library_index") || die("Unable to open file '$library_index': $!");
+    open(LIBRARY_INDEX, ">:encoding(utf8)", "$library_index") || die("Unable to open file '$library_index': $!");
     print LIBRARY_INDEX "$output";
     close LIBRARY_INDEX;
 }
@@ -618,14 +618,14 @@ sub refreshNewsIndex {
         $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
         $t->param(SHOW_EDITOR_LINK => 1);
         my $output = $t->output;
-        open(FINAL, "> $ENV{DOCUMENT_ROOT}/news/archive/${filename}");
+        open(FINAL, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/news/archive/${filename}") or die $!;
         print FINAL "$output";
         close FINAL;
     }
     $template->param(NEWSBITS => \@newsbits);
     $template->param(SHOW_EDITOR_LINK => 1);
     my $output = $template->output;
-    open(FINAL, "> $ENV{DOCUMENT_ROOT}/news/index.html");
+    open(FINAL, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/news/index.html") or die $!;
     print FINAL "$output";
     close FINAL;
 }
