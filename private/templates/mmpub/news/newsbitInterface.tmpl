@@ -42,11 +42,13 @@ Title: <input maxlength="255" size="50" type="text" name="title" value="<TMPL_VA
 
 <br><br>
 
-Newsbit URL: <input maxlength="255" type="text" name="newsbit_URL" value="<TMPL_VAR NEWSBIT_URL>" size="100"><br><br>
+Featured URL: <input maxlength="255" type="text" name="newsbit_URL" value="<TMPL_VAR NEWSBIT_URL>" size="100" placeholder="link to direct users to, onsite or off"><br><br>
 
-Newsbit Image: <input type="file" name="image" onChange="toggleURLField(this);"><br><br>
+Image: <input type="file" name="image" onChange="toggleURLField(this);"><br><br>
 
-Newsbit Image URL: <input maxlength="255" type="text" id="newsbit_image_URL" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
+Image URL: <input maxlength="255" type="text" id="newsbit_image_URL" name="newsbit_image_URL" value="<TMPL_VAR NEWSBIT_IMAGE_URL>" size="100"><br><br>
+
+Image Caption: <input maxlength="255" type="text" id="image_caption" name="image_caption" value="<TMPL_VAR IMAGE_CAPTION>" size="100"><br><br>
 
 <textarea name="newsbit" style="width: 60%; height: 450px;" required><TMPL_VAR NEWSBIT></textarea><br><br>
 

@@ -14,21 +14,7 @@
 
     <div style="float: left; width: 60%;">
         <span style="width: 100%; padding-left: 20px;"><TMPL_VAR NEWSBIT_DATETIME></span>
-        <article>
-            <p class="dropcap">
-            <TMPL_VAR NEWSBIT>
-            </p>
-            <TMPL_IF NEWSBIT_IMAGE_URL>
-                <figure style="margin-top: 0px;"><a href="<TMPL_VAR NEWSBIT_URL>" target="_blank"><img src="<TMPL_VAR NEWSBIT_IMAGE_URL>" alt="<TMPL_VAR CAPTION>" style="max-width: 100%;"></a><TMPL_IF CAPTION><figcaption><TMPL_VAR CAPTION></figcaption></TMPL_IF></figure>
-            </TMPL_IF>
-            <TMPL_IF NEWSBIT_URL>
-                <br><br>
-                <a href="<TMPL_VAR NEWSBIT_URL>">Touch here to dig this...</a>
-                <br>
-            </TMPL_IF>
-            <br><br>
-        </article>
-
+        <TMPL_INCLUDE NAME="article_include.tmpl">
     </div>
 
     <div style="float: right; width: 33%; padding: 25px;">

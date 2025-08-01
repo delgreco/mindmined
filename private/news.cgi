@@ -223,13 +223,13 @@ sub newsbitInterface {
     my $id=$cgiobject->param('id'); 
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsbitInterface.tmpl');
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, published
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, published, image_caption
     FROM news
     WHERE id = ?
     SQL
     my $sth = $dbh->prepare($select);
     $sth->execute($id);
-    my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published) = $sth->fetchrow_array();
+    my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published, $image_caption) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
     $t->param(DATETIME => $datetime);
     $t->param(NEWSBIT => $newsbit);
@@ -237,6 +237,7 @@ sub newsbitInterface {
     $t->param(PUBLISHED => $published);
     $t->param(NEWSBIT_URL => $newsbit_url);
     $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
+    $t->param(IMAGE_CAPTION => $image_caption);
     $t->param(FILENAME => _getNewsbitFilename($title, $datetime));
     $t->param(ID => $id);
     my @categories;
@@ -461,7 +462,7 @@ Keep home page piping hot with news.
 sub refreshIndex {
     my $t = HTML::Template->new(filename => 'templates/index.tmpl');
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(datetime)
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(datetime), image_caption
     FROM news
     JOIN news_categories
     ON news_categories.name = news.category
@@ -471,7 +472,7 @@ sub refreshIndex {
     my $sth = $dbh->prepare($select);
     $sth->execute();
     my $counter = 0; my @newsbits;
-    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month) = $sth->fetchrow_array()) {
+    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month, $image_caption) = $sth->fetchrow_array()) {
         my %row;
         $counter++;
         if ($counter > 8) {last;}
@@ -486,6 +487,7 @@ sub refreshIndex {
         $row{NEWSBIT_URL} = $newsbit_url;
         $row{FILENAME} = _getNewsbitFilename($title, $datetime);
         $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
+        $row{IMAGE_CAPTION} = $image_caption;
         $row{NEWSBIT_DATETIME} = $datetime;
         # give me a break
         $newsbit =~ s/\n/<br>/g;
@@ -580,7 +582,7 @@ Refresh the list of news items at C<news/index.html>.
 sub refreshNewsIndex {
     my $template = HTML::Template->new(filename => 'templates/news/index.tmpl');
     my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, 
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, image_caption, category, news_categories.url, 
     news_categories.icon_image_url, datetime, MONTHNAME(`datetime`), published
     FROM news
     LEFT JOIN news_categories
@@ -590,7 +592,7 @@ sub refreshNewsIndex {
     my $sth = $dbh->prepare($select);
     $sth->execute();
     my $counter = 0; my @newsbits;
-    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url,  $category_icon_url, $datetime, $month, $published) = $sth->fetchrow_array()) {
+    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $image_caption, $category, $category_url, $category_icon_url, $datetime, $month, $published) = $sth->fetchrow_array()) {
         my %row;
         $counter++;
         my $monthnum = substr($datetime, 5, 2);
@@ -617,6 +619,7 @@ sub refreshNewsIndex {
         $t->param(NEWSBIT_URL => $newsbit_url);
         $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
         $t->param(SHOW_EDITOR_LINK => 1);
+        $t->param(IMAGE_CAPTION => $image_caption);
         my $output = $t->output;
         open(FINAL, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/news/archive/${filename}") or die $!;
         print FINAL "$output";
@@ -645,6 +648,7 @@ sub saveNewsbit {
     my $newsbit_URL=$cgiobject->param('newsbit_URL');
     my $image=$cgiobject->param('image');
     my $newsbit_image_URL=$cgiobject->param('newsbit_image_URL');
+    my $image_caption=$cgiobject->param('image_caption');
     my $category=$cgiobject->param('category'); 
     my $id=$cgiobject->param('id'); 
     $published = $published ? 1 : 0;
@@ -684,10 +688,10 @@ sub saveNewsbit {
     if ( $id ) {  # update existing item
         my $sql = <<~"SQL";
         UPDATE news 
-        SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?
+        SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?, image_caption = ?
         WHERE id = ?
         SQL
-        my $rows_updated = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $id);
+        my $rows_updated = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $image_caption, $id);
         if ( $rows_updated != 1 ) {
             print STDERR "ERROR: $rows_updated rows updated.\n";
         }
@@ -704,11 +708,11 @@ sub saveNewsbit {
         my $newsletter_status = 'pending';
         my $sql = <<~"SQL";
         INSERT INTO news 
-        (newsbit_title, newsbit, newsbit_URL, newsbit_image_URL, category, datetime, newsletter_status, published) 
+        (newsbit_title, newsbit, newsbit_URL, newsbit_image_URL, category, `datetime`, newsletter_status, published, image_caption) 
         VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?)
         SQL
-        my $rows_inserted = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published);
+        my $rows_inserted = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published, $image_caption);
         if ( $rows_inserted != 1 ) {
             print STDERR "ERROR: $rows_inserted rows inserted.\n";
         }
