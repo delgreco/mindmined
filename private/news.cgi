@@ -487,6 +487,9 @@ sub refreshIndex {
         $row{NEWSBIT_URL} = $newsbit_url;
         $row{FILENAME} = _getNewsbitFilename($title, $datetime);
         $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
+        if ( $newsbit_url !~ m/mindmined\.com/ ) {
+            $row{OFFSITE} = 1;
+        }
         $row{IMAGE_CAPTION} = $image_caption;
         $row{NEWSBIT_DATETIME} = $datetime;
         # give me a break
@@ -617,6 +620,9 @@ sub refreshNewsIndex {
         $t->param(NEWSBIT => $newsbit);
         $t->param(NEWSBIT_DATETIME => $datetime);
         $t->param(NEWSBIT_URL => $newsbit_url);
+        if ( $newsbit_url !~ m/mindmined\.com/ ) {
+            $t->param(OFFSITE => 1);
+        }
         $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
         $t->param(SHOW_EDITOR_LINK => 1);
         $t->param(IMAGE_CAPTION => $image_caption);
