@@ -567,7 +567,7 @@ sub refreshNews {
     publishRSS();
     my $datetime = `date`;
     chomp($datetime);
-    if ($command_line_call) {
+    if ( $command_line_call ) {
         print LOG "$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.\n" if $debug;
     }
     else {
@@ -727,12 +727,11 @@ sub saveNewsbit {
         $message = qq |Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.|;
     }
     refreshNews();
-    mainInterface($message);
 }
 
 =head2 saveNewsletter()
 
-TODO
+Update the metadata for a newsletter.
 
 =cut
 
