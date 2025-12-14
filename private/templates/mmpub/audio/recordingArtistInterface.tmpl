@@ -1,10 +1,12 @@
 <TMPL_INCLUDE NAME="../../standard_head.tmpl"></head><body>
 <TMPL_INCLUDE NAME="top.tmpl">
 
+<h1>Recording Artist: <TMPL_IF TRACK><TMPL_VAR TITLE><TMPL_ELSE>Add New</TMPL_IF></h1>
 
 <form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+
 Enter the <b>new recording artist</b><br>
-<input type="text" size="50" name="rec_artist" value="<TMPL_VAR REC_ARTIST>"> &nbsp;&nbsp;
+<input type="text" size="50" name="rec_artist" value="<TMPL_VAR REC_ARTIST>" required> &nbsp;&nbsp;
 <input type="checkbox" name="published" <TMPL_IF PUBLISHED>CHECKED</TMPL_IF>> Published  <br><br>
 
 Enter the <b>email</b> contact for this artist<br>
@@ -16,20 +18,21 @@ Enter the <b>homesite</b> (if any) for this artist<br>
 <input type="text" name="homesite" size="50" value="<TMPL_VAR HOMESITE>"><br><br>
 
 Enter the <b>image URL</b> to represent this artist visually<br>
-<input type="text" name="image_url" size="100" value="<TMPL_IF IMAGE_URL><TMPL_VAR IMAGE_URL><TMPL_ELSE>https://www.mindmined.com/audiofun-images/</TMPL_IF>"><br><br>
+<input type="text" name="image_url" size="100" value="<TMPL_IF IMAGE_URL><TMPL_VAR IMAGE_URL><TMPL_ELSE>/audiofun-images/</TMPL_IF>" required><br><br>
 
 Enter a good, concise <b>directory name</b> to contain files for this artist (underscores, not spaces, please!)<br>
-<input type="text" name="dir" size="20" value="<TMPL_VAR DIR>"><br><br>
+<input type="text" name="dir" size="20" value="<TMPL_VAR DIR>" required><br><br>
 
 Enter a <b>profile</b> for this artist, adding HTML optionally<br>
-<textarea name="profile" cols="80" rows="8" id="profile"><TMPL_VAR PROFILE></textarea>
+<textarea name="profile" cols="80" rows="8" id="profile" required><TMPL_VAR PROFILE></textarea>
+
 <br><br>
-<br><br> 
+
 <input type="hidden" name="action" value="saveRecordingArtist">
 <input type="hidden" name="id" value="<TMPL_VAR ID>">
 <input type="submit" value="Save">
 </form>
-<br><br><br>
 
+<br><br><br>
 
 <TMPL_INCLUDE NAME="../bottom.tmpl">

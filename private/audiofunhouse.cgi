@@ -48,6 +48,11 @@ my ($template, $message) = &{\&{$action}}();
 
 _processTemplate($template, $message);
 
+=head2 batchFunhouse()
+
+TODO
+
+=cut
 
 sub batchFunhouse {
 	#batchTrackList(); # now done in daily.pl
@@ -56,6 +61,12 @@ sub batchFunhouse {
 	my $message = 'The Funhouse has been batched.';
 	mainInterface($message);
 }
+
+=head2 batchRecArtistPages()
+
+TODO
+
+=cut
 
 sub batchRecArtistPages {
     my $rec_artists_template = HTML::Template->new(filename => 'templates/audio/rec_artists.tmpl');
@@ -141,6 +152,12 @@ sub batchRecArtistPages {
     print REC_ARTIST_LIST "$output";
     close(REC_ARTIST_LIST);
 }
+
+=head2 batchReleasePages()
+
+TODO
+
+=cut
 
 sub batchReleasePages {
     my $release_template = HTML::Template->new(filename => 'templates/audio/release.tmpl');
@@ -286,7 +303,7 @@ sub batchTrackList {
 
 =head2 deleteRecordingArtist
 
-Deletes a recording artist.
+Given a recording artist id, delete that recording artist.
 
 TODO: put some failsafes in places.
 
@@ -297,52 +314,72 @@ sub deleteRecordingArtist {
 	my $select = <<~"SQL";
     SELECT name FROM rec_artists WHERE id = ?
     SQL
-	my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute($id) || die "execute: $select: $DBI::errstr";
+	my $sth = $dbh->prepare($select);
+	$sth->execute($id);
 	my ($rec_artist) = $sth->fetchrow_array();
     my $delete = <<~"SQL";
     DELETE FROM rec_artists WHERE id = ?
     SQL
     $sth = $dbh->prepare($delete);
-    $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
-    my $message = qq {$rec_artist deleted from the database.};
+    $sth->execute($id);
+    my $message = "'$rec_artist' deleted from the database.";
     mainInterface($message);
 }
 
+=head2 deleteRelease()
+
+Given a release id, delete that release.
+
+=cut
+
 sub deleteRelease {
 	my $id=$cgiobject->param('id'); 
-	my $select="SELECT 'release' FROM releases WHERE id = '$id'";
-	my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute || die "execute: $select: $DBI::errstr";
+	my $select="SELECT 'release' FROM releases WHERE id = ?";
+	my $sth = $dbh->prepare($select);
+	$sth->execute($id);
 	my ($release) = $sth->fetchrow_array();
     my $delete="DELETE FROM releases WHERE id = ?";
     $sth = $dbh->prepare($delete);
-    $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
+    $sth->execute($id);
     my $message = qq {$release deleted from the database.};
     mainInterface($message);
 }
 
+=head2 deleteTrack()
+
+Given a track id, delete that track.
+
+=cut
+
 sub deleteTrack {
 	my $id=$cgiobject->param("id"); 
 	my $select="SELECT title FROM tracks WHERE id = '$id'";
-	my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute || die "execute: $select: $DBI::errstr";
+	my $sth = $dbh->prepare($select);
+	$sth->execute;
 	my ($track_name) = $sth->fetchrow_array();
-    my $delete="DELETE FROM tracks WHERE id ='$id'";
+    my $delete="DELETE FROM tracks WHERE id = ?";
     $sth = $dbh->prepare($delete);
-    $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
-    my $message = qq {$track_name deleted from the database.};
+    $sth->execute($id);
+    my $message = "'$track_name' deleted from the database.";
     mainInterface($message);
 }
+
+=head2 mainInterface()
+
+TODO
+
+=cut
 
 sub mainInterface {
 	my $message = $_[0];
 	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/mainInterface.tmpl');
-	my $select="SELECT name, email, homesite, dir, id 
+	my $select = <<~"SQL";
+    SELECT name, email, homesite, dir, id 
     FROM rec_artists 
-    ORDER BY name";
+    ORDER BY name
+    SQL
 	my $sth = $dbh->prepare($select);
-	$sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+	$sth->execute();
 	my $i; my @rec_artists;
 	while (my ($rec_artist, $email, $homesite, $dir, $id) = $sth->fetchrow_array()) {
 		my %row;
@@ -362,11 +399,13 @@ sub mainInterface {
 		$row{SCRIPT_NAME} = $ENV{SCRIPT_NAME};
 		push(@rec_artists, \%row);
 	}
-	$select="SELECT `release`, year, filename, id 
+	$select = <<~"SQL";
+    SELECT `release`, year, filename, id 
     FROM releases 
-    ORDER BY `release`";
+    ORDER BY `release`
+    SQL
 	$sth = $dbh->prepare($select);
-	$sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+	$sth->execute();
 	my @releases;
 	while (my ($release, $year, $filename, $id) = $sth->fetchrow_array()) {
 		my %row;
@@ -384,11 +423,13 @@ sub mainInterface {
 		$row{SCRIPT_NAME} = $ENV{SCRIPT_NAME};
 		push(@releases, \%row);
 	}
-	$select="SELECT title, length, bitrate, mediatype, release_id, id
+	$select = <<~"SQL";
+    SELECT title, length, bitrate, mediatype, release_id, id
     FROM tracks 
-    ORDER BY title";
+    ORDER BY title
+    SQL
 	$sth = $dbh->prepare($select);
-	$sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+	$sth->execute();
 	my @tracks;
 	while (my ($title, $length, $bitrate, $mediatype, $release_id, $id) = $sth->fetchrow_array()) {
 		my %row;
@@ -419,6 +460,12 @@ sub mainInterface {
 	return ($template, $message);
 }
 
+=head2 _processTemplate()
+
+TODO
+
+=cut
+
 sub _processTemplate {
 	my $template = $_[0];
 	my $message = $_[1];
@@ -428,6 +475,12 @@ sub _processTemplate {
 	print "Content-type: text/html\n\n";
 	print $output;
 }
+
+=head2 recordingArtistInterface()
+
+TODO
+
+=cut
 
 sub recordingArtistInterface {
 	my $id=$cgiobject->param("id"); 
@@ -460,12 +513,18 @@ sub recordingArtistInterface {
 	return ($template, $message);
 }
 
+=head2 releaseInterface()
+
+TODO
+
+=cut
+
 sub releaseInterface {
 	my $id=$cgiobject->param('id'); 
 	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/releaseInterface.tmpl');
 	my $release; my $rec_artist_id; my $year; my $image_url;
 	my $filename; my $description; my $store_id;
-	if ($id) { 
+	if ( $id ) { 
 		my $select="SELECT `release`, rec_artist, id, year, image_url, filename, description, store_id 
         FROM releases WHERE id = ?";
 		my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
@@ -479,7 +538,6 @@ sub releaseInterface {
 		my ($this_year) = $sth->fetchrow_array();
 		$year = qq {$this_year};
 		$image_url = qq {https://www.mindmined.com/audiofun-images/};
-		$filename = qq {filename.html};
 	}
 	# create recording aritst dropdown
 	my $select="SELECT id, name 
@@ -521,6 +579,12 @@ sub releaseInterface {
 	return ($template, $message);
 }
 
+=head2 saveRecordingArtist()
+
+TODO
+
+=cut
+
 sub saveRecordingArtist {
 	my $rec_artist=$cgiobject->param("rec_artist"); 
 	my $published=$cgiobject->param("published"); 
@@ -557,6 +621,12 @@ sub saveRecordingArtist {
 	}
 }
 
+=head2 saveRelease()
+
+TODO
+
+=cut
+
 sub saveRelease {
 	my $release=$cgiobject->param('release'); 
 	my $filename=$cgiobject->param('filename'); 
@@ -584,6 +654,12 @@ sub saveRelease {
 		mainInterface($message);
 	}
 }
+
+=head2 saveTrack()
+
+TODO
+
+=cut
 
 sub saveTrack {
 	my $url=$cgiobject->param('url'); 
@@ -617,6 +693,12 @@ sub saveTrack {
 		mainInterface($message);
 	}
 }
+
+=head2 trackInterface()
+
+TODO
+
+=cut
 
 sub trackInterface {
 	my $id=$cgiobject->param('id'); 
