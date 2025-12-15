@@ -596,6 +596,7 @@ sub saveRecordingArtist {
 	my $image_url=$cgiobject->param("image_url"); 
 	my $id=$cgiobject->param("id"); 
     $published = $published ? 1 : 0;
+    my $message;
 	if ( $id ) {
 		$profile =~ s/\n/<br>/g;
 		my $update="UPDATE rec_artists 
@@ -603,8 +604,7 @@ sub saveRecordingArtist {
         WHERE id = ?";
 		my $sth = $dbh->prepare($update);
 		$sth->execute($rec_artist, $dir, $email, $email_display, $homesite, $profile, $image_url, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
-		my $message = qq {$rec_artist has been updated.};
-		mainInterface($message);
+		$message = "'$rec_artist' has been updated.";
 	}
 	else {
 		my $insert="INSERT INTO rec_artists 
@@ -614,11 +614,14 @@ sub saveRecordingArtist {
 		$sth->execute($rec_artist, $dir, $email, $email_display, $homesite, $profile, $image_url, $published) || die "execute: $insert: $DBI::errstr";
 		# grab the automatically incremented id that was generated
 		$id = $sth->{mysql_insertid} || $sth->{insertid}; 
-		# establish directory for this recording artist
-		system("mkdir $ENV{DOCUMENT_ROOT}/audio/$dir");
-		my $message = qq |$rec_artist has been added.|;
-		mainInterface($message);
+        my $rec_artist_dir = "$ENV{DOCUMENT_ROOT}/audio/$dir";
+        unless ( -d $rec_artist_dir ) {
+            # establish directory for this recording artist
+            system("mkdir $rec_artist_dir");
+		    $message = "'$rec_artist' has been added.";
+        }
 	}
+	mainInterface($message);
 }
 
 =head2 saveRelease()
