@@ -32,28 +32,32 @@
             <p><TMPL_VAR DESCRIPTION></p>
         </article>
 
-        <h2>Tracks from <TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h2>
-        <div class="grid">
-        <TMPL_LOOP TRACKS>
-            <div>
-                <h3 style="font-weight: normal; color: #AAAAAA;"><TMPL_VAR TRACKNUM> &nbsp; <a class="type4" href="<TMPL_VAR URL>"><TMPL_VAR TITLE></a></h3>
-                <TMPL_IF AUDIO>
-                    <audio src="<TMPL_VAR URL>" controls="" controlsList="noplaybackrate" flashstopped="true" id="" preload="metadata">
-                        <a href="<TMPL_VAR URL>"><img src="/audiofun-images/download_arrow2.gif" border="0">Download</a>
-                    </audio><br><br><br>
-                </TMPL_IF>
-                <TMPL_IF VIDEO>
-                    <video controls="">
-                        <source src="<TMPL_VAR URL>" type="video/mp4">
+        <TMPL_IF TRACKS>
+            <h2>Tracks from <TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h2>
+            <div class="grid">
+            <TMPL_LOOP TRACKS>
+                <div>
+                    <h3 style="font-weight: normal; color: #AAAAAA;"><TMPL_VAR TRACKNUM> &nbsp; <a class="type4" href="<TMPL_VAR URL>"><TMPL_VAR TITLE></a></h3>
+                    <TMPL_IF AUDIO>
+                        <audio src="<TMPL_VAR URL>" controls="" controlsList="noplaybackrate" flashstopped="true" id="" preload="metadata">
+                            <a href="<TMPL_VAR URL>"><img src="/audiofun-images/download_arrow2.gif" border="0">Download</a>
+                        </audio><br><br><br>
+                    </TMPL_IF>
+                    <TMPL_IF VIDEO>
+                        <video controls="">
+                            <source src="<TMPL_VAR URL>" type="video/mp4">
 
-                        Download the <a href="<TMPL_VAR URL>">video</a>
-                    </video>
-                </TMPL_IF>
-                <!-- <TMPL_VAR LENGTH> - <TMPL_VAR MEDIATYPE> -->
-                <!-- <TMPL_VAR BITRATE> -->
+                            Download the <a href="<TMPL_VAR URL>">video</a>
+                        </video>
+                    </TMPL_IF>
+                    <!-- <TMPL_VAR LENGTH> - <TMPL_VAR MEDIATYPE> -->
+                    <!-- <TMPL_VAR BITRATE> -->
+                </div>
+            </TMPL_LOOP>
             </div>
-        </TMPL_LOOP>
-        </div>
+        <TMPL_ELSE>
+        
+        </TMPL_IF>
 
     </div>
 
