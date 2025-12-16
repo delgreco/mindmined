@@ -16,7 +16,6 @@
 </div>
 <!-- end title of the day -->
 
-<!-- <hr align="right" hspace="5" size="1" width="70%" color="#3E969F"> -->
 <br><br><br>
 
 <!-- start track of the day table -->
@@ -31,9 +30,6 @@
     </audio><br>
     <TMPL_VAR TRACK_TITLE> by <a class="type4" href="<TMPL_VAR TRACK_REC_ARTIST_URL>"><TMPL_VAR TRACK_REC_ARTIST></a>
     </figure>
-    <!-- <a class="type4" href="<TMPL_VAR TRACK_URL>"><img hspace="5" style="max-width: 100%;" border="0" alt="<TMPL_VAR TRACK_REC_ARTIST>" src="<TMPL_VAR RELEASE_IMAGE_URL>"><br>
-    <img alt="<TMPL_VAR TRACK_MEDIATYPE>, <TMPL_VAR TRACK_BITRATE>" border="0" src="/audiofun-images/download_arrow2.gif" hspace="6">"<TMPL_VAR TRACK_TITLE>"</a>  (<TMPL_VAR TRACK_LENGTH>)<br>
-    by <a class="type4"  href="<TMPL_VAR TRACK_REC_ARTIST_URL>"><TMPL_VAR TRACK_REC_ARTIST><br> -->
     </a><br>Enter the <a class="type4" href="/audio">Audio Funhouse</a>
 </div>
 <!-- end track of the day -->
@@ -50,15 +46,19 @@
 <!-- end gallery feature -->
 
 <br><br><br>
-<!--
-<center>
-A percentage of sales from our store<br>
-goes to the maintenance<br>
-of this archive...<br><br>
--->
 
-<!-- start product feature -->
-<!-- <a class="type4" href="<TMPL_VAR PRODUCT_URL>"><TMPL_VAR PRODUCT><br><img vspace="2" border="0" src="<TMPL_VAR PRODUCT_IMAGE_URL>"></a><br><TMPL_IF PRODUCT_DESCRIPTION><TMPL_VAR PRODUCT_DESCRIPTION><br></TMPL_IF><br><br>Enter the <a class="type4" href="/products/index.html">Store</a> -->
+<TMPL_IF PRODUCT>
+    <!--
+    <center>
+    A percentage of sales from our store<br>
+    goes to the maintenance<br>
+    of this archive...<br><br>
+    -->
+
+    <!-- start product feature -->
+    <!-- <a class="type4" href="<TMPL_VAR PRODUCT_URL>"><TMPL_VAR PRODUCT><br><img vspace="2" border="0" src="<TMPL_VAR PRODUCT_IMAGE_URL>"></a><br><TMPL_IF PRODUCT_DESCRIPTION><TMPL_VAR PRODUCT_DESCRIPTION><br></TMPL_IF><br><br>Enter the <a class="type4" href="/products/index.html">Store</a> -->
+</TMPL_IF>
 <!-- end product feature -->
+
 
 </center>

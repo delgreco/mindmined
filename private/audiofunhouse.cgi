@@ -5,6 +5,7 @@ use 5.030;
 
 use lib qw (
     ../lib
+    .
     local/lib/perl5
     local/lib/perl5/x86_64-linux-thread-multi
 );
@@ -22,24 +23,11 @@ use FatalsToEmail
       Error_cache /tmp/library.tmp
       Seconds 60
       Debug 1
-    );  
+    );
 
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
+use MindMined;
 
 my $cgiobject = new CGI;
-# force templates to be read as UTF-8
-HTML::Template->config(utf8 => 1);
 
 my $action=$cgiobject->param('action');
 $action = 'mainInterface' if ! $action;
@@ -55,7 +43,7 @@ TODO
 =cut
 
 sub batchFunhouse {
-	#batchTrackList(); # now done in daily.pl
+	MindMined::batchTrackList();
 	batchRecArtistPages();
 	batchReleasePages();
 	my $message = 'The Funhouse has been batched.';
@@ -78,8 +66,8 @@ sub batchRecArtistPages {
     WHERE published = 1
     ORDER BY name
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my @rec_artists;
     while (my ($rec_artist_id, $email, $email_display, $homesite, $profile, $image_url, $dir, $rec_artist) = $sth->fetchrow_array()) {
         my $rec_artist_template = HTML::Template->new(filename => 'templates/audio/rec_artist.tmpl');
@@ -95,7 +83,7 @@ sub batchRecArtistPages {
         WHERE rec_artist = '$rec_artist_id'
         ORDER BY year DESC
         SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute || die "execute: $select: $DBI::errstr";
         my @releases;
         while (my ($release, $filename, $year, $release_image_url) = $sth->fetchrow_array()) {
@@ -171,17 +159,17 @@ sub batchReleasePages {
     WHERE rec_artists.published = 1
     ORDER BY year DESC
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my @releases;
     while (my ($release, $rec_artist_id, $year, $image_url, $filename, $description, $store_id, $release_id, $rec_artist, $dir) = $sth->fetchrow_array()) {
         my %row;
         $count++;
         my $product_url; my $price;
-        unless (! $store_id || $store_id eq '0') { 
-            my $select="SELECT price, product_URL FROM products WHERE id = '$store_id'";
-            my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-            $sth->execute || die "execute: $select: $DBI::errstr";
+        unless ( ! $store_id || $store_id eq '0' ) { 
+            my $select="SELECT price, product_URL FROM products WHERE id = ?";
+            my $sth = $MindMined::dbh->prepare($select);
+            $sth->execute($store_id);
             ($price, $product_url) = $sth->fetchrow_array();
         }
         $release_template->param(PRICE => $price);
@@ -193,8 +181,8 @@ sub batchReleasePages {
         WHERE release_id = ?
         AND published = 1
         SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute($release_id) || die "execute: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($release_id);
         my @tracks; my $tracks_for_keywords; my $tracknum = 0;
         while (my ($title, $url, $length, $mediatype, $bitrate) = $sth->fetchrow_array()) {
             $tracknum++;
@@ -251,56 +239,6 @@ sub batchReleasePages {
     close(RELEASE_LIST);
 }
 
-=head2 batchTrackList()
-
-TODO
-
-=cut
-
-sub batchTrackList {
-    my $template = HTML::Template->new(filename => 'templates/audio/tracks.tmpl');
-    my $count = 0;
-    my $select = <<~"SQL";
-    SELECT tracks.title, tracks.url, tracks.length, tracks.mediatype, tracks.bitrate, releases.`release`, releases.filename, ra.name, ra.dir 
-    FROM tracks 
-    LEFT JOIN releases 
-    ON tracks.release_id = releases.id 
-    LEFT JOIN rec_artists AS ra
-    ON releases.rec_artist = ra.id 
-    WHERE ra.published = 1
-    ORDER BY title
-    SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
-    my @tracks;
-    while (my ($title, $url, $length, $mediatype, $bitrate, $release, $filename, $rec_artist, $dir) = $sth->fetchrow_array()) {
-        my %row;
-        $row{URL} = $url;
-        $row{TITLE} = $title;
-        $row{LENGTH} = $length;
-        $row{DIR} = $dir;
-        $row{FILENAME} = $filename;
-        #$row{MEDIATYPE} = $mediatype;
-        #$row{BITRATE} = $bitrate;
-        $row{RELEASE} = $release;
-        $row{REC_ARTIST} = $rec_artist;
-        push(@tracks, \%row);
-        $count++;
-    }
-    $template->param(TRACKS => \@tracks);
-    $template->param(TOTAL => $count);
-    $template->param(PAGETITLE => 'Complete audio tracks available on mindmined.com');
-    $template->param(DESCRIPTION => "$count tracks, most in mp3 format, downloadable for free on mindmined.com.");
-    $template->param(KEYWORDS => 'recording artists,podsafe music,free mp3s,download mp3s,bands');
-    $template->param(WINDOW_STATUS => 'Obtain permission before using tracks for any purpose other than your listening pleasure.');
-    my $output = $template->output;
-    open(INDEX_PAGE, "> $ENV{DOCUMENT_ROOT}/audio/alpha_by_track.html");
-    print INDEX_PAGE "$output";
-    close INDEX_PAGE;
-    my $message = 'Tracks page refreshed.';
-    mainInterface($message) unless $ENV{CRON};
-}
-
 =head2 deleteRecordingArtist
 
 Given a recording artist id, delete that recording artist.
@@ -314,13 +252,13 @@ sub deleteRecordingArtist {
 	my $select = <<~"SQL";
     SELECT name FROM rec_artists WHERE id = ?
     SQL
-	my $sth = $dbh->prepare($select);
+	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute($id);
 	my ($rec_artist) = $sth->fetchrow_array();
     my $delete = <<~"SQL";
     DELETE FROM rec_artists WHERE id = ?
     SQL
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id);
     my $message = "'$rec_artist' deleted from the database.";
     mainInterface($message);
@@ -335,11 +273,11 @@ Given a release id, delete that release.
 sub deleteRelease {
 	my $id=$cgiobject->param('id'); 
 	my $select="SELECT 'release' FROM releases WHERE id = ?";
-	my $sth = $dbh->prepare($select);
+	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute($id);
 	my ($release) = $sth->fetchrow_array();
     my $delete="DELETE FROM releases WHERE id = ?";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id);
     my $message = qq {$release deleted from the database.};
     mainInterface($message);
@@ -354,11 +292,11 @@ Given a track id, delete that track.
 sub deleteTrack {
 	my $id=$cgiobject->param("id"); 
 	my $select="SELECT title FROM tracks WHERE id = '$id'";
-	my $sth = $dbh->prepare($select);
+	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute;
 	my ($track_name) = $sth->fetchrow_array();
     my $delete="DELETE FROM tracks WHERE id = ?";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id);
     my $message = "'$track_name' deleted from the database.";
     mainInterface($message);
@@ -378,7 +316,7 @@ sub mainInterface {
     FROM rec_artists 
     ORDER BY name
     SQL
-	my $sth = $dbh->prepare($select);
+	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute();
 	my $i; my @rec_artists;
 	while (my ($rec_artist, $email, $homesite, $dir, $id) = $sth->fetchrow_array()) {
@@ -404,7 +342,7 @@ sub mainInterface {
     FROM releases 
     ORDER BY `release`
     SQL
-	$sth = $dbh->prepare($select);
+	$sth = $MindMined::dbh->prepare($select);
 	$sth->execute();
 	my @releases;
 	while (my ($release, $year, $filename, $id) = $sth->fetchrow_array()) {
@@ -428,7 +366,7 @@ sub mainInterface {
     FROM tracks 
     ORDER BY title
     SQL
-	$sth = $dbh->prepare($select);
+	$sth = $MindMined::dbh->prepare($select);
 	$sth->execute();
 	my @tracks;
 	while (my ($title, $length, $bitrate, $mediatype, $release_id, $id) = $sth->fetchrow_array()) {
@@ -441,7 +379,7 @@ sub mainInterface {
 			$row{BGCOLOR} = '#FFFFFF';
 		}
 		my $select="SELECT `release` FROM releases WHERE id = ?";
-		my $sth = $dbh->prepare($select);
+		my $sth = $MindMined::dbh->prepare($select);
 		$sth->execute($release_id) || die "sth->execute($select): $DBI::errstr\n";
 		my ($release) = $sth->fetchrow_array();
 		$row{RELEASE} = $release;
@@ -491,7 +429,7 @@ sub recordingArtistInterface {
 		my $select="SELECT name, email, email_display, homesite, profile, image_url, dir, published 
         FROM rec_artists 
         WHERE id = ?";
-		my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
 		$sth->execute($id) || die "execute: $select: $DBI::errstr";
 		($rec_artist, $email, $email_display, $homesite, $profile, $image_url, $dir, $published) = $sth->fetchrow_array();
 		$profile =~ s/<br>/\n/g;
@@ -527,13 +465,13 @@ sub releaseInterface {
 	if ( $id ) { 
 		my $select="SELECT `release`, rec_artist, id, year, image_url, filename, description, store_id 
         FROM releases WHERE id = ?";
-		my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
 		$sth->execute($id) || die "execute: $select: $DBI::errstr";
 		($release, $rec_artist_id, $id, $year, $image_url, $filename, $description, $store_id) = $sth->fetchrow_array();
 	}
 	else {
 		my $select="SELECT YEAR(NOW())";
-		my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
 		$sth->execute || die "execute: $select: $DBI::errstr";
 		my ($this_year) = $sth->fetchrow_array();
 		$year = qq {$this_year};
@@ -542,7 +480,7 @@ sub releaseInterface {
 	# create recording aritst dropdown
 	my $select="SELECT id, name 
     FROM rec_artists ORDER BY name";
-	my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+	my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
 	$sth->execute || die "execute: $select: $DBI::errstr";
 	my @rec_artist_options;
 	while (my ($id, $rec_artist) = $sth->fetchrow_array()) {
@@ -556,7 +494,7 @@ sub releaseInterface {
 	}
 	# create product dropdown
 	$select="SELECT id, product FROM products ORDER BY product";
-	$sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+	$sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
 	$sth->execute || die "execute: $select: $DBI::errstr";
 	my @product_options;
 	while (my ($id, $product) = $sth->fetchrow_array()) {
@@ -602,7 +540,7 @@ sub saveRecordingArtist {
 		my $update="UPDATE rec_artists 
         SET name = ?, dir = ?, email = ?, email_display = ?, homesite = ?, profile = ?, image_url = ?, published= ?
         WHERE id = ?";
-		my $sth = $dbh->prepare($update);
+		my $sth = $MindMined::dbh->prepare($update);
 		$sth->execute($rec_artist, $dir, $email, $email_display, $homesite, $profile, $image_url, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
 		$message = "'$rec_artist' has been updated.";
 	}
@@ -610,7 +548,7 @@ sub saveRecordingArtist {
 		my $insert="INSERT INTO rec_artists 
         (name, dir, email, email_display, homesite, profile, image_url, published) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
 		$sth->execute($rec_artist, $dir, $email, $email_display, $homesite, $profile, $image_url, $published) || die "execute: $insert: $DBI::errstr";
 		# grab the automatically incremented id that was generated
 		$id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -642,14 +580,14 @@ sub saveRelease {
 	if ( $id ) {
 		my $update="UPDATE releases SET `release` = ?, filename = ?, year = ?, description = ?, image_url = ?, store_id = ?, rec_artist = ? 
 		WHERE id = ?";
-		my $sth = $dbh->prepare($update);
+		my $sth = $MindMined::dbh->prepare($update);
 		$sth->execute($release, $filename, $year, $description, $image_url, $store_id, $rec_artist_id, $id) || die "sth->execute($update): $DBI::errstr\n";
 		my $message = qq |$release has been updated.|;
 		mainInterface($message);
 	}
 	else {
 		my $insert="INSERT INTO releases (`release`, filename, rec_artist, year, store_id, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)";
-		my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
 		$sth->execute($release, $filename, $rec_artist_id, $year, $store_id, $description, $image_url) || die "execute: $insert: $DBI::errstr";
 		# grab the automatically incremented id that was generated
 		$id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -678,7 +616,7 @@ sub saveTrack {
 		my $update="UPDATE tracks 
 		SET title = ?, url = ?, length = ?, mediatype = ?, bitrate = ?, release_id = ?, published = ?
 		WHERE id = ?";
-		my $sth = $dbh->prepare($update);
+		my $sth = $MindMined::dbh->prepare($update);
 		$sth->execute($title, $url, $length, $mediatype, $bitrate, $release_id, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
 		my $message = qq |$title has been updated.|;
 		mainInterface($message);
@@ -688,7 +626,7 @@ sub saveTrack {
 		(url, title, release_id, length, mediatype, bitrate, published) 
 		VALUES 
 		(?, ?, ?, ?, ?, ?, ?)";
-		my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
 		$sth->execute($url, $title, $release_id, $length, $mediatype, $bitrate, $published) || die "execute: $insert: $DBI::errstr";
 		# grab the automatically incremented id that was generated
 		$id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -705,7 +643,7 @@ TODO
 
 sub trackInterface {
 	my $id=$cgiobject->param('id'); 
-	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/trackInterface.tmpl');
+	my $t = HTML::Template->new(filename => 'templates/mmpub/audio/trackInterface.tmpl');
 	my $url; my $title; my $published; my $release_id; my $length;
 	my $mediatype; my $bitrate;
 	my $add_or_update;
@@ -713,8 +651,8 @@ sub trackInterface {
 		$add_or_update = 'Update';
 		my $select="SELECT url, title, release_id, length, mediatype, bitrate, published
         FROM tracks WHERE id = ?";
-		my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-		$sth->execute($id) || die "execute: $select: $DBI::errstr";
+		my $sth = $MindMined::dbh->prepare($select);
+		$sth->execute($id);
 		($url, $title, $release_id, $length, $mediatype, $bitrate, $published) = $sth->fetchrow_array();
 	}
 	else {
@@ -725,10 +663,12 @@ sub trackInterface {
 		$bitrate = '128 kbps';
 	}
 	###
-	my $select="SELECT `release`, id 
-    FROM releases ORDER BY `release`";
-	my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute || die "execute: $select: $DBI::errstr";
+	my $select = <<~"SQL";
+    SELECT `release`, id 
+    FROM releases ORDER BY `release`
+    SQL
+	my $sth = $MindMined::dbh->prepare($select);
+	$sth->execute;
 	my @release_options;
 	while (my ($release, $id) = $sth->fetchrow_array()) {
 		my %row;
@@ -739,14 +679,14 @@ sub trackInterface {
 		$row{ID} = $id;
 		push(@release_options, \%row);
 	}
-	$template->param(RELEASE_OPTIONS => \@release_options);
-	$template->param(URL => $url);
-	$template->param(TITLE => $title);
-	$template->param(PUBLISHED => $published);
-	$template->param(LENGTH => $length);
-	$template->param(MEDIATYPE => $mediatype);
-	$template->param(BITRATE => $bitrate);
-	$template->param(ID => $id);
-	return ($template, $message);
+	$t->param(RELEASE_OPTIONS => \@release_options);
+	$t->param(URL => $url);
+	$t->param(TITLE => $title);
+	$t->param(PUBLISHED => $published);
+	$t->param(LENGTH => $length);
+	$t->param(MEDIATYPE => $mediatype);
+	$t->param(BITRATE => $bitrate);
+	$t->param(ID => $id);
+	return ($t, $message);
 }
 

@@ -26,14 +26,8 @@
         </TMPL_IF>
         <br>
 
-        <img src="<TMPL_VAR IMAGE_URL>" style="max-width: 100%;" vspace="8"><br>
-
-        <article>
-            <p><TMPL_VAR DESCRIPTION></p>
-        </article>
-
         <TMPL_IF TRACKS>
-            <h2>Tracks from <TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h2>
+            <h2><!-- Tracks from --><TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h2>
             <div class="grid">
             <TMPL_LOOP TRACKS>
                 <div>
@@ -58,6 +52,13 @@
         <TMPL_ELSE>
         
         </TMPL_IF>
+
+        <img src="<TMPL_VAR IMAGE_URL>" style="max-width: 100%;" vspace="8"><br>
+
+        <article>
+            <p><TMPL_VAR DESCRIPTION></p>
+        </article>
+
 
     </div>
 
@@ -93,16 +94,18 @@
             <p><TMPL_VAR DESCRIPTION></p>
         </article>
 
-        <h1>Tracks from <TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h1>
-        <TMPL_LOOP TRACKS>
-            <h2><TMPL_VAR TITLE></h2>
-            <audio src="<TMPL_VAR URL>" controls="" controlsList="noplaybackrate" flashstopped="true" id="" preload="metadata">
-                Sorry, your browser does not support the <code>audio</code> element.
-            </audio><br><br>
-            <!-- <a href="<TMPL_VAR URL>"><img src="/audiofun-images/download_arrow2.gif" border="0"></a> -->
-            <!-- <TMPL_VAR LENGTH> - <TMPL_VAR MEDIATYPE> -->
-            <!-- <TMPL_VAR BITRATE> -->
-        </TMPL_LOOP> <br><br><br><br>
+        <TMPL_IF TRACKS>
+            <h1>Tracks from <TMPL_VAR RELEASE> (<TMPL_VAR YEAR>)</h1>
+            <TMPL_LOOP TRACKS>
+                <h2><TMPL_VAR TITLE></h2>
+                <audio src="<TMPL_VAR URL>" controls="" controlsList="noplaybackrate" flashstopped="true" id="" preload="metadata">
+                    Sorry, your browser does not support the <code>audio</code> element.
+                </audio><br><br>
+                <!-- <a href="<TMPL_VAR URL>"><img src="/audiofun-images/download_arrow2.gif" border="0"></a> -->
+                <!-- <TMPL_VAR LENGTH> - <TMPL_VAR MEDIATYPE> -->
+                <!-- <TMPL_VAR BITRATE> -->
+            </TMPL_LOOP> <br><br><br><br>
+        </TMPL_IF>
 
 
         more audio offerings...<br><br>

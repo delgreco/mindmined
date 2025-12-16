@@ -5,6 +5,7 @@ use 5.030;
 
 use lib qw (
     ../lib
+    .
     local/lib/perl5
     local/lib/perl5/x86_64-linux-thread-multi
 );
@@ -21,25 +22,11 @@ use FatalsToEmail
       Error_cache /tmp/library.tmp
       Seconds 60
       Debug 1
-    );  
+    );
 
 use open qw( :std :encoding(UTF-8) );
 
-# force templates to be read as UTF-8
-HTML::Template->config(utf8 => 1);
-
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
+use MindMined;
 
 my $debug = 0;
 
@@ -49,7 +36,6 @@ my $template_path = "$doc_root/cgi-bin/private/templates";
 if ( @ARGV ) { 
     $ARGV[0] =~ s/-//;  # remove dash from option
     my $action = $ARGV[0];
-    open(LOG, ">> $doc_root/cron.log");
     &{\&{$action}}();  # call the proper sub and exit when done
 } 
 else {
@@ -69,7 +55,7 @@ sub artistOfTheDay {
     FROM gallery 
     ORDER BY RAND()
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute;
     my ($id, $image_title, $image_URL, $artist_id) = $sth->fetchrow_array();
     $select = <<~"SQL";
@@ -77,7 +63,7 @@ sub artistOfTheDay {
     FROM artists 
     WHERE id = ?
     SQL
-    $sth = $dbh->prepare($select);
+    $sth = $MindMined::dbh->prepare($select);
     $sth->execute($artist_id);
     my ($first_name, $last_name, $dir) = $sth->fetchrow_array();
     $index_template->param(ARTIST => "$first_name $last_name");
@@ -104,55 +90,6 @@ sub artistOfTheDay {
     return $index_template;
 }
 
-=head2 batchTrackList()
-
-TODO
-
-=cut
-
-sub batchTrackList {
-    my $t = HTML::Template->new(filename => 'templates/audio/tracks.tmpl');
-    my $count = 0;
-    my $select = <<~"SQL";
-    SELECT tracks.title, tracks.url, tracks.length, tracks.mediatype, tracks.bitrate, 
-    releases.`release`, releases.filename, ra.name, ra.dir
-    FROM tracks
-    LEFT JOIN releases
-    ON tracks.release_id = releases.id
-    LEFT JOIN rec_artists AS ra
-    ON releases.rec_artist = ra.id
-    WHERE ra.published = 1
-    ORDER BY title
-    SQL
-    my $sth = $dbh->prepare($select);
-    $sth->execute;
-    my @tracks;
-    while (my ($title, $url, $length, $mediatype, $bitrate, $release, $filename, $rec_artist, $dir) = $sth->fetchrow_array()) {
-        my %row;
-        $row{URL} = $url;
-        $row{TITLE} = $title;
-        $row{LENGTH} = $length;
-        $row{DIR} = $dir;
-        $row{FILENAME} = $filename;
-        #$row{MEDIATYPE} = $mediatype;
-        #$row{BITRATE} = $bitrate;
-        $row{RELEASE} = $release;
-        $row{REC_ARTIST} = $rec_artist;
-        push(@tracks, \%row);
-        $count++;
-    }
-    $t->param(TRACKS => \@tracks);
-    $t->param(TOTAL => $count);
-    $t->param(PAGETITLE => 'Complete audio tracks available on mindmined.com');
-    $t->param(DESCRIPTION => "$count tracks, most in mp3 format, downloadable for free on mindmined.com.");
-    $t->param(KEYWORDS => 'recording artists,podsafe music,free mp3s,download mp3s,bands');
-    $t->param(WINDOW_STATUS => 'Obtain permission before using tracks for any purpose other than your listening pleasure.');
-    my $output = $t->output;
-    open(INDEX_PAGE, "> $doc_root/audio/alpha_by_track.html");
-    print INDEX_PAGE "$output";
-    close INDEX_PAGE;
-}
-
 =head2 dailyBatch()
 
 TODO
@@ -163,15 +100,13 @@ sub dailyBatch {
     makeDailyFeaturesTemplate();
     recArtistOfTheDay();
     releaseOfTheDay();
-    batchTrackList();  # has a track-of-the-day panel
+    MindMined::batchTrackList();  # has a track-of-the-day panel
     makeOtherPages();
     
     my $datetime = `date`;
     chomp($datetime);
-    print LOG qq |$datetime, daily.cgi: Daily features template refreshed, others refreshed too.  Run news.cgi --refresh to update these to the homepage.
-| if $debug;
+    print "$datetime, daily.pl: Daily features template refreshed, others refreshed too.\nRun news.cgi --refresh to update these to the homepage.\n";
 }
-
 
 =head2 dailyBatch()
 
@@ -250,43 +185,44 @@ TODO
 
 sub productOfTheDay {
     my $index_template = $_[0];
-    my $select = <<"SQL";
-    SELECT product, product_id, description, price, product_image_URL, product_URL, product_type, id 
+    my $select = <<~"SQL";
+    SELECT product, product_id, description, price, product_image_URL, 
+    product_URL, product_type, id 
     FROM products 
     ORDER BY RAND()
-SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
-    my ($product, $product_id, $description, $price, $product_image_URL, $product_URL, $product_type, $id) = $sth->fetchrow_array();
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
+    my ($product, $product_id, $description, $price, $product_image_URL, 
+        $product_URL, $product_type, $id) = $sth->fetchrow_array();
     $index_template->param(PRODUCT_URL => $product_URL);
     $index_template->param(PRODUCT => $product);
     $index_template->param(PRODUCT_DESCRIPTION => $description);
     $index_template->param(PRODUCT_URL => $product_URL);
     $index_template->param(PRODUCT_IMAGE_URL => $product_image_URL);    
-    return  $index_template;
+    return $index_template;
 }
 
 =head2 recArtistOfTheDay()
 
-TODO
+Prepare a fresh "Recording Artist of the Day" html file for inclusion in the 
+Recording Artists index.
 
 =cut
 
 sub recArtistOfTheDay { 
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT name, dir, image_url
     FROM rec_artists
     ORDER BY RAND()
-SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my ($rec_artist, $rec_artist_dir, $image_url) = $sth->fetchrow_array();
-    #if ( ( $random[$rand] eq '1' ) && ( $rec_artist_id == 1 ) ) { 
-        # selecting a Cozmik track of the day a little less often
-    #    next;
-    #}
     # standalone file 
-    my $t = HTML::Template->new(filename => "$template_path/daily_features/daily_rec_artist.tmpl") || die "oops $!";
+    my $t = HTML::Template->new(
+        filename => "$template_path/daily_features/daily_rec_artist.tmpl"
+    ) || die "oops $!";
     $t->param(REC_ARTIST => $rec_artist);
     $t->param(REC_ARTIST_URL => "/audiofun/${rec_artist_dir}/");
     $t->param(REC_ARTIST_IMAGE_URL => $image_url);
@@ -299,27 +235,27 @@ SQL
 
 =head2 releaseOfTheDay()
 
-TODO
+Prepare a fresh "Release of the Day" html file for inclusion in the Releases 
+index.
 
 =cut
 
 sub releaseOfTheDay {   
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT `release`, rec_artist, rel.image_url, filename, year, ra.name, ra.dir
     FROM releases AS rel
     LEFT JOIN rec_artists AS ra
     ON rel.rec_artist = ra.id
     ORDER BY RAND()
-SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
-    my ($release, $rec_artist_id, $image_url, $filename, $year, $rec_artist, $rec_artist_dir) = $sth->fetchrow_array();
-    #if ( ( $random[$rand] eq '1' ) && ( $rec_artist_id == 1 ) ) { 
-        # selecting a Cozmik track of the day a little less often
-    #    next;
-    #}
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
+    my ($release, $rec_artist_id, $image_url, $filename, $year, $rec_artist, 
+        $rec_artist_dir) = $sth->fetchrow_array();
     # standalone file 
-    my $t = HTML::Template->new(filename => "$template_path/daily_features/daily_release.tmpl") || die "oops $!";
+    my $t = HTML::Template->new(
+        filename => "$template_path/daily_features/daily_release.tmpl"
+    ) || die "oops $!";
     $t->param(RELEASE => "$release");
     $t->param(RELEASE_URL => "/audiofun/${rec_artist_dir}/${filename}");
     $t->param(RELEASE_IMAGE_URL => $image_url);
@@ -334,46 +270,48 @@ SQL
 
 =head2 trackOfTheDay()
 
-TODO
+Prepare a fresh "Tracks of the Day" html file for inclusion in the Tracks
+index.
 
 =cut
 
 sub trackOfTheDay { 
     my $index_template = $_[0];
     my @random = ('1', '2');
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT title, url, length, mediatype, bitrate, release_id
     FROM tracks 
     WHERE published = 1
     ORDER BY RAND()
-SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my $title; my $url; my $length;
     my $mediatype; my $bitrate; my $release; my $release_id;
     my $rec_artist_id; my $image_url; my $filename; my $year;
     my $rec_artist; my $rec_artist_dir;
     while (($title, $url, $length, $mediatype, $bitrate, $release_id) = $sth->fetchrow_array()) {
         my $rand = rand @random;
-        my $select = <<"SQL";
+        my $select = <<~"SQL";
         SELECT `release`, rec_artist, image_url, filename, year 
         FROM releases 
         WHERE id = '$release_id'
-SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute;
         ($release, $rec_artist_id, $image_url, $filename, $year) = $sth->fetchrow_array();
-        if (($random[$rand] eq "1") && ($rec_artist_id == 1)) {  # selecting a Cozmik track of the day a little less often
+        # select a Cozmik track of the day a little less often
+        if ( ($random[$rand] eq "1") && ($rec_artist_id == 1) ) {  
             next;
         }
         my $success = 1;
-        $select = <<"SQL";
+        $select = <<~"SQL";
         SELECT name, dir 
         FROM rec_artists 
-        WHERE id = '$rec_artist_id'
-SQL
-        $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        WHERE id = ?
+        SQL
+        $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($rec_artist_id);
         ($rec_artist, $rec_artist_dir) = $sth->fetchrow_array();
         if ( $success eq "1" ) {
             last;
@@ -382,9 +320,9 @@ SQL
     $index_template->param(RELEASE_IMAGE_URL => $image_url);
     $index_template->param(TRACK_TITLE => $title);
     $index_template->param(TRACK_URL => $url);
-    $index_template->param(TRACK_MEDIATYPE => $mediatype);
-    $index_template->param(TRACK_BITRATE => $bitrate);
-    $index_template->param(TRACK_LENGTH => $length);
+    # $index_template->param(TRACK_MEDIATYPE => $mediatype);
+    # $index_template->param(TRACK_BITRATE => $bitrate);
+    # $index_template->param(TRACK_LENGTH => $length);
     $index_template->param(TRACK_REC_ARTIST => $rec_artist);
     $index_template->param(TRACK_REC_ARTIST_URL => "/audiofun/$rec_artist_dir");
     #$index_template->param(HOMEPAGE => 1); # show links to sub-sections
@@ -423,24 +361,25 @@ TODO
 
 sub titleOfTheDay {
     my $index_template = $_[0];
-    my $select = <<"SQL";
-    SELECT pagetitle, genre, image_URL, description, filename, author_id, id, image_alt_text, keywords 
+    my $select = <<~"SQL";
+    SELECT pagetitle, genre, image_URL, description, filename, author_id, id, 
+    image_alt_text, keywords 
     FROM titles 
     WHERE genre <> 'erotic_fiction' 
     AND published = 'yes'
     ORDER BY RAND()
-SQL
-    my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute();
     my ($pagetitle, $genre, $image_URL, $description, $filename, $author_id, $id, $image_alt_text, $keywords) = $sth->fetchrow_array();
     # grab information about the author
-    $select = <<"SQL";
+    $select = <<~"SQL";
     SELECT last_name, first_name 
     FROM authors 
-    WHERE id = '$author_id'
-SQL
-    $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    WHERE id = ?
+    SQL
+    $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($author_id);
     my ($last_name, $first_name) = $sth->fetchrow_array();
     $index_template->param(TITLE_URL => "/public_library/$genre/$filename");
     $index_template->param(TITLE => $pagetitle);    
