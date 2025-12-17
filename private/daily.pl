@@ -30,9 +30,6 @@ use MindMined;
 
 my $debug = 0;
 
-my $doc_root = "/home/mindmine/www";
-my $template_path = "$doc_root/cgi-bin/private/templates";
-
 if ( @ARGV ) { 
     $ARGV[0] =~ s/-//;  # remove dash from option
     my $action = $ARGV[0];
@@ -71,20 +68,15 @@ sub artistOfTheDay {
     $index_template->param(GALLERY_IMAGE_URL => $image_URL);
 
     # artist of the day standalone file 
-    my $template = HTML::Template->new(filename => "$template_path/daily_features/daily_artist.tmpl") || die "oops $!";
+    my $template = HTML::Template->new(
+        filename => "$MindMined::template_path/daily_features/daily_artist.tmpl",
+    ) || die "oops $!";
     $template->param(ARTIST_URL => "/gallery/$dir");
     $template->param(ARTIST => "$first_name $last_name");
     $template->param(GALLERY_IMAGE_URL => "$image_URL");
-    my $file = "$template_path/daily_features/today_artist.html";
+    my $file = "$MindMined::template_path/daily_features/today_artist.html";
     open(TODAY, "> $file") || die "$file, $!";
     my $output = $template->output;
-    print TODAY "$output";
-    close(TODAY);
-    # for index page
-    $template->param(HOMEPAGE => 1); # show links to sub-sections
-    $file = "$template_path/daily_features/today_artist_index.html";
-    open(TODAY, "> $file") || die "$file, $!";
-    $output = $template->output;
     print TODAY "$output";
     close(TODAY);
     return $index_template;
@@ -92,7 +84,7 @@ sub artistOfTheDay {
 
 =head2 dailyBatch()
 
-TODO
+Refresh daily features.
 
 =cut
 
@@ -102,13 +94,16 @@ sub dailyBatch {
     releaseOfTheDay();
     MindMined::batchTrackList();  # has a track-of-the-day panel
     makeOtherPages();
-    
     my $datetime = `date`;
     chomp($datetime);
-    print "$datetime, daily.pl: Daily features template refreshed, others refreshed too.\nRun news.cgi --refresh to update these to the homepage.\n";
+    unless ( $ENV{CRON} ) {
+        print "$datetime, daily.pl: Daily features template refreshed.\n";
+        print "Others refreshed too.\n";
+        print "Run news.cgi --refresh to update these to the homepage.\n";
+    }
 }
 
-=head2 dailyBatch()
+=head2 makeDailyFeaturesTemplate()
 
 TODO
 
@@ -116,12 +111,12 @@ TODO
 
 # this is a page of raw html to incorporate into index.html, which will refresh more frequently
 sub makeDailyFeaturesTemplate {
-    my $t = HTML::Template->new(filename => "$template_path/daily_features/daily.tmpl") || die "oops $!";
+    my $t = HTML::Template->new(filename => "$MindMined::template_path/daily_features/daily.tmpl") || die "oops $!";
     $t = trackOfTheDay($t);  
     $t = titleOfTheDay($t);   
     $t = artistOfTheDay($t);     
     $t = productOfTheDay($t); 
-    open(TODAY, "> $template_path/daily_features/today.html") || die "$template_path/daily_features/today.html, $!";
+    open(TODAY, "> $MindMined::template_path/daily_features/today.html") || die "$MindMined::template_path/daily_features/today.html, $!";
     my $output = $t->output;
     print TODAY "$output";
     close(TODAY);
@@ -135,42 +130,42 @@ TODO
 
 sub makeOtherPages {
     # subscribe page
-    # my $subscribe_template = HTML::Template->new(filename => "$template_path/subscribe.tmpl");
+    # my $subscribe_template = HTML::Template->new(filename => "$MindMined::template_path/subscribe.tmpl");
     # $subscribe_template->param(PAGETITLE => "Subscribe to the Mind Mined Newsletter");
     # $subscribe_template->param(DESCRIPTION => "Our email newsletter is sent every now and again.  We prefer you to subscribe to our RSS feed for free syndicated content.");
     # $subscribe_template->param(KEYWORDS => 'audio downloads, multimedia production, original fiction, nonfiction, plays, poetry, CDs, mp3 downloads, web development services, New Hampshire music studios, online gallery');
-    # open(SUB_PAGE, "> $doc_root/subscribe.html");
+    # open(SUB_PAGE, "> $MindMined::doc_root/subscribe.html");
     # my $output = $subscribe_template->output;
     # print SUB_PAGE "$output";
     # close(SUB_PAGE);
     
     # unsubscribe page
-    # my $unsubscribe_template = HTML::Template->new(filename => "$template_path/unsubscribe.tmpl");
+    # my $unsubscribe_template = HTML::Template->new(filename => "$MindMined::template_path/unsubscribe.tmpl");
     # $unsubscribe_template->param(PAGETITLE => 'Unsubscribe to the Mind Mined Newsletter');
     # $unsubscribe_template->param(DESCRIPTION => "We'll be glad to stop emailing you-- just say so.");
     # $unsubscribe_template->param(KEYWORDS => 'audio downloads, multimedia production, original fiction, nonfiction, plays, poetry, CDs, mp3 downloads, web development services, New Hampshire music studios, online gallery');
-    # open(UNSUB_PAGE, "> $doc_root/unsubscribe.html");
+    # open(UNSUB_PAGE, "> $MindMined::doc_root/unsubscribe.html");
     # $output = $unsubscribe_template->output;
     # print UNSUB_PAGE "$output";
     # close(UNSUB_PAGE);
     
     # "Contact Us" page
-    my $contact_template = HTML::Template->new(filename => "$template_path/contact/index.tmpl");
+    my $contact_template = HTML::Template->new(filename => "$MindMined::template_path/contact/index.tmpl");
     $contact_template->param(PAGETITLE => 'Contact Mind Mined Productions');
     $contact_template->param(DESCRIPTION => 'Welcome to Mind Mined, a multimedia production and publishing company where creative content is king.');
     $contact_template->param(KEYWORDS => 'audio downloads, multimedia production, original fiction, nonfiction, plays, poetry, CDs, mp3 downloads, web development services, New Hampshire music studios, online gallery');
-    open(CONTACT_PAGE, "> $doc_root/contact/index.html");
+    open(CONTACT_PAGE, "> $MindMined::doc_root/contact/index.html");
     my $output = $contact_template->output;
     print CONTACT_PAGE "$output";
     close(CONTACT_PAGE);
 
     # "Preferences" page
-    my $prefs_template = HTML::Template->new(filename => "$template_path/preferences.tmpl");
+    my $prefs_template = HTML::Template->new(filename => "$MindMined::template_path/preferences.tmpl");
     $prefs_template->param(PAGETITLE => 'Mind Mined Productions: User Preferences');
     $prefs_template->param(DESCRIPTION => 'Select personal preferences such as Dark Mode.');
     $prefs_template->param(KEYWORDS => 'audio downloads, multimedia production, original fiction, nonfiction, plays, poetry, CDs, mp3 downloads, web development services, New Hampshire music studios, online gallery');
     $prefs_template->param(SHOW_EDITOR_LINK => 1);
-    open(CONTACT_PAGE, "> $doc_root/preferences.html");
+    open(CONTACT_PAGE, "> $MindMined::doc_root/preferences.html");
     $output = $prefs_template->output;
     print CONTACT_PAGE "$output";
     close(CONTACT_PAGE);
@@ -179,7 +174,8 @@ sub makeOtherPages {
 
 =head2 productOfTheDay()
 
-TODO
+Given a template object, return that object populated with data for a 
+Product of the Day.
 
 =cut
 
@@ -221,12 +217,12 @@ sub recArtistOfTheDay {
     my ($rec_artist, $rec_artist_dir, $image_url) = $sth->fetchrow_array();
     # standalone file 
     my $t = HTML::Template->new(
-        filename => "$template_path/daily_features/daily_rec_artist.tmpl"
+        filename => "$MindMined::template_path/daily_features/daily_rec_artist.tmpl"
     ) || die "oops $!";
     $t->param(REC_ARTIST => $rec_artist);
     $t->param(REC_ARTIST_URL => "/audiofun/${rec_artist_dir}/");
     $t->param(REC_ARTIST_IMAGE_URL => $image_url);
-    my $path = "$template_path/daily_features/today_rec_artist.html";
+    my $path = "$MindMined::template_path/daily_features/today_rec_artist.html";
     open(TODAY, "> $path") || die "$path, $!";
     my $output = $t->output;
     print TODAY "$output";
@@ -254,14 +250,14 @@ sub releaseOfTheDay {
         $rec_artist_dir) = $sth->fetchrow_array();
     # standalone file 
     my $t = HTML::Template->new(
-        filename => "$template_path/daily_features/daily_release.tmpl"
+        filename => "$MindMined::template_path/daily_features/daily_release.tmpl"
     ) || die "oops $!";
     $t->param(RELEASE => "$release");
     $t->param(RELEASE_URL => "/audiofun/${rec_artist_dir}/${filename}");
     $t->param(RELEASE_IMAGE_URL => $image_url);
     $t->param(REC_ARTIST => $rec_artist);
     $t->param(REC_ARTIST_URL => "/audiofun/$rec_artist_dir");
-    my $path = "$template_path/daily_features/today_release.html";
+    my $path = "$MindMined::template_path/daily_features/today_release.html";
     open(TODAY, "> $path") || die "$path, $!";
     my $output = $t->output;
     print TODAY "$output";
@@ -270,7 +266,7 @@ sub releaseOfTheDay {
 
 =head2 trackOfTheDay()
 
-Prepare a fresh "Tracks of the Day" html file for inclusion in the Tracks
+Prepare a fresh "Track of the Day" html file for inclusion in the Tracks
 index.
 
 =cut
@@ -320,42 +316,27 @@ sub trackOfTheDay {
     $index_template->param(RELEASE_IMAGE_URL => $image_url);
     $index_template->param(TRACK_TITLE => $title);
     $index_template->param(TRACK_URL => $url);
-    # $index_template->param(TRACK_MEDIATYPE => $mediatype);
-    # $index_template->param(TRACK_BITRATE => $bitrate);
-    # $index_template->param(TRACK_LENGTH => $length);
     $index_template->param(TRACK_REC_ARTIST => $rec_artist);
     $index_template->param(TRACK_REC_ARTIST_URL => "/audiofun/$rec_artist_dir");
-    #$index_template->param(HOMEPAGE => 1); # show links to sub-sections
     # track of the day standalone file 
-    my $t = HTML::Template->new(filename => "$template_path/daily_features/daily_track.tmpl") || die "oops $!";
+    my $t = HTML::Template->new(filename => "$MindMined::template_path/daily_features/daily_track.tmpl") || die "oops $!";
     $t->param(RELEASE_URL => "/audiofun/${rec_artist_dir}/${filename}");
     $t->param(RELEASE_IMAGE_URL => $image_url);
     $t->param(TRACK_TITLE => $title);
     $t->param(TRACK_URL => $url);
-    $t->param(TRACK_MEDIATYPE => $mediatype);
-    $t->param(TRACK_BITRATE => $bitrate);
-    #$t->param(TRACK_LENGTH => $length);
     $t->param(TRACK_REC_ARTIST => $rec_artist);
     $t->param(TRACK_REC_ARTIST_URL => "/audiofun/$rec_artist_dir");
-    my $file = "$template_path/daily_features/today_track.html";
+    my $file = "$MindMined::template_path/daily_features/today_track.html";
     open(TODAY, "> $file") || die "$file, $!";
     my $output = $t->output;
     print TODAY "$output";
     close(TODAY);
-    # for index page
-    $t->param(HOMEPAGE => 1); # show links to sub-sections
-    $file = "$template_path/daily_features/today_track_index.html";
-    open(TODAY, "> $file") || die "$file, $!";
-    $output = $t->output;
-    print TODAY "$output";
-    close(TODAY);
-
     return $index_template;
 }
 
 =head2 titleOfTheDay()
 
-TODO
+Prepare a fresh "Title of the Day" html file for inclusion in other pages.
 
 =cut
 
@@ -372,6 +353,7 @@ sub titleOfTheDay {
     my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my ($pagetitle, $genre, $image_URL, $description, $filename, $author_id, $id, $image_alt_text, $keywords) = $sth->fetchrow_array();
+
     # grab information about the author
     $select = <<~"SQL";
     SELECT last_name, first_name 
@@ -389,27 +371,19 @@ sub titleOfTheDay {
     $index_template->param(TITLE_IMAGE_URL => $image_URL);
 
     # title of the day standalone file 
-    my $template = HTML::Template->new(filename => "$template_path/daily_features/daily_title.tmpl") || die "oops $!";
+    my $template = HTML::Template->new(filename => "$MindMined::template_path/daily_features/daily_title.tmpl") || die "oops $!";
     $template->param(TITLE => $pagetitle);
     $template->param(TITLE_URL => "/public_library/$genre/$filename");
     $template->param(AUTHOR => "$first_name $last_name");
     $template->param(TITLE_DESCRIPTION => $description);
     $template->param(TITLE_ALT => $image_alt_text);
     $template->param(TITLE_IMAGE_URL => $image_URL);
-    my $file = "$template_path/daily_features/today_title.html";
+    my $file = "$MindMined::template_path/daily_features/today_title.html";
     open(TODAY, "> $file") || die "$file, $!";
     my $output = $template->output;
     print TODAY "$output";
     close(TODAY);
-    # for index page
-    $template->param(HOMEPAGE => 1); # show links to sub-sections
-    $file = "$template_path/daily_features/today_title_index.html";
-    open(TODAY, "> $file") || die "$file, $!";
-    $output = $template->output;
-    print TODAY "$output";
-    close(TODAY);
     return $index_template;
 }
-
 
 

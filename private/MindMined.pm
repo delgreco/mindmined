@@ -28,8 +28,8 @@ our $dbh = DBI->connect(
     }
 ) || die "Connect failed: $DBI::errstr\n"; 
 
-my $doc_root = "/home/mindmine/www";
-my $template_path = "$doc_root/cgi-bin/private/templates";
+our $doc_root = "/home/mindmine/www";
+our $template_path = "$doc_root/cgi-bin/private/templates";
 
 =head2 batchTrackList()
 
