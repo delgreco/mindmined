@@ -55,7 +55,14 @@
         </article>
     </TMPL_LOOP>
 
-    <TMPL_INCLUDE NAME="daily_features/today.html">
+    Image of the Day from the <a href="/gallery">Gallery</a><br><br>
+    <TMPL_INCLUDE NAME="templates/daily_features/today_artist.html"><br><br><br><br><br>
+
+    Track of the Day from the <a href="/audio">Audio Funhouse</a><br><br>
+    <TMPL_INCLUDE NAME="templates/daily_features/today_track.html"><br><br><br><br><br><br>
+
+    Title of the Day from the <a href="/audio">Public Library</a><br><br>
+    <TMPL_INCLUDE NAME="daily_features/today_title.html">
 
 </div>
 

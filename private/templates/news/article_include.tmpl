@@ -3,7 +3,7 @@
     <TMPL_VAR NEWSBIT>
     </p>
     <TMPL_IF NEWSBIT_IMAGE_URL>
-        <figure style="margin-top: 0px;"><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>" <TMPL_IF OFFSITE>target="_blank"></TMPL_IF></TMPL_IF><img src="<TMPL_VAR NEWSBIT_IMAGE_URL>" alt="<TMPL_VAR CAPTION>" style="max-width: 100%;"><TMPL_IF NEWSBIT_URL></a></TMPL_IF><TMPL_IF IMAGE_CAPTION><figcaption><TMPL_VAR IMAGE_CAPTION></figcaption></TMPL_IF></figure>
+        <figure style="margin-top: 0px;"><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>" <TMPL_IF OFFSITE>target="_blank"</TMPL_IF>></TMPL_IF><img src="<TMPL_VAR NEWSBIT_IMAGE_URL>" alt="<TMPL_VAR CAPTION>" style="max-width: 100%;"><TMPL_IF NEWSBIT_URL></a></TMPL_IF><TMPL_IF IMAGE_CAPTION><figcaption><TMPL_VAR IMAGE_CAPTION></figcaption></TMPL_IF></figure>
     </TMPL_IF>
     <TMPL_IF NEWSBIT_URL>
         <br><br>
