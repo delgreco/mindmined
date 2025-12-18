@@ -41,14 +41,11 @@ else {
 
 =head2 artistOfTheDay()
 
-Given a template object for the index file, return it populated with data
-for Image of the Day, also creating C<today_artist.tmpl>.
+Create C<today_artist.tmpl>, the Image/Artist of the Day.
 
 =cut
 
 sub artistOfTheDay {
-    my $index_template = $_[0];
-   
     # get today's random image from the gallery
     my $select = <<~"SQL";
     SELECT id, title, url, artist_id 
@@ -81,13 +78,6 @@ sub artistOfTheDay {
     my $output = $template->output;
     print TODAY "$output";
     close(TODAY);
-
-    # populate index file template with Image of the Day values
-    $index_template->param(ARTIST => "$first_name $last_name");
-    $index_template->param(ARTIST_URL => "/gallery/$dir");
-    $index_template->param(GALLERY_IMAGE_URL => $image_URL);
-
-    return $index_template;
 }
 
 =head2 dailyBatch()
@@ -97,6 +87,9 @@ Refresh daily features.
 =cut
 
 sub dailyBatch {
+    trackOfTheDay();  
+    titleOfTheDay();
+    artistOfTheDay();
     recArtistOfTheDay();
     releaseOfTheDay();
     MindMined::batchTrackList();  # has a track-of-the-day panel
@@ -142,34 +135,6 @@ sub makeOtherPages {
     $output = $prefs_template->output;
     print CONTACT_PAGE "$output";
     close(CONTACT_PAGE);
-}
-
-
-=head2 productOfTheDay()
-
-Given a template object, return that object populated with data for a 
-Product of the Day.
-
-=cut
-
-sub productOfTheDay {
-    my $index_template = $_[0];
-    my $select = <<~"SQL";
-    SELECT product, product_id, description, price, product_image_URL, 
-    product_URL, product_type, id 
-    FROM products 
-    ORDER BY RAND()
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute;
-    my ($product, $product_id, $description, $price, $product_image_URL, 
-        $product_URL, $product_type, $id) = $sth->fetchrow_array();
-    $index_template->param(PRODUCT_URL => $product_URL);
-    $index_template->param(PRODUCT => $product);
-    $index_template->param(PRODUCT_DESCRIPTION => $description);
-    $index_template->param(PRODUCT_URL => $product_URL);
-    $index_template->param(PRODUCT_IMAGE_URL => $product_image_URL);    
-    return $index_template;
 }
 
 =head2 recArtistOfTheDay()
@@ -245,7 +210,6 @@ index.
 =cut
 
 sub trackOfTheDay { 
-    my $index_template = $_[0];
     my @random = ('1', '2');
     my $select = <<~"SQL";
     SELECT title, url, length, mediatype, bitrate, release_id
@@ -282,17 +246,13 @@ sub trackOfTheDay {
         $sth = $MindMined::dbh->prepare($select);
         $sth->execute($rec_artist_id);
         ($rec_artist, $rec_artist_dir) = $sth->fetchrow_array();
-        if ( $success eq "1" ) {
+        if ( $success == 1 ) {
             last;
         }
     }
-    $index_template->param(RELEASE_IMAGE_URL => $image_url);
-    $index_template->param(TRACK_TITLE => $title);
-    $index_template->param(TRACK_URL => $url);
-    $index_template->param(TRACK_REC_ARTIST => $rec_artist);
-    $index_template->param(TRACK_REC_ARTIST_URL => "/audiofun/$rec_artist_dir");
-    # track of the day standalone file 
-    my $t = HTML::Template->new(filename => "$MindMined::template_path/daily_features/daily_track.tmpl") || die "oops $!";
+    my $t = HTML::Template->new(
+        filename => "$MindMined::template_path/daily_features/daily_track.tmpl"
+    ) || die "oops $!";
     $t->param(RELEASE_URL => "/audiofun/${rec_artist_dir}/${filename}");
     $t->param(RELEASE_IMAGE_URL => $image_url);
     $t->param(TRACK_TITLE => $title);
@@ -304,7 +264,6 @@ sub trackOfTheDay {
     my $output = $t->output;
     print TODAY "$output";
     close(TODAY);
-    return $index_template;
 }
 
 =head2 titleOfTheDay()
@@ -314,7 +273,7 @@ Prepare a fresh "Title of the Day" html file for inclusion in other pages.
 =cut
 
 sub titleOfTheDay {
-    my $index_template = $_[0];
+    # select a random title of the day
     my $select = <<~"SQL";
     SELECT pagetitle, genre, image_URL, description, filename, author_id, id, 
     image_alt_text, keywords 
@@ -336,15 +295,11 @@ sub titleOfTheDay {
     $sth = $MindMined::dbh->prepare($select);
     $sth->execute($author_id);
     my ($last_name, $first_name) = $sth->fetchrow_array();
-    $index_template->param(TITLE_URL => "/public_library/$genre/$filename");
-    $index_template->param(TITLE => $pagetitle);    
-    $index_template->param(AUTHOR => "$first_name $last_name");
-    $index_template->param(TITLE_DESCRIPTION => $description);
-    $index_template->param(TITLE_ALT => $image_alt_text);
-    $index_template->param(TITLE_IMAGE_URL => $image_URL);
 
     # title of the day standalone file 
-    my $template = HTML::Template->new(filename => "$MindMined::template_path/daily_features/daily_title.tmpl") || die "oops $!";
+    my $template = HTML::Template->new(
+        filename => "$MindMined::template_path/daily_features/daily_title.tmpl"
+    ) || die "oops $!";
     $template->param(TITLE => $pagetitle);
     $template->param(TITLE_URL => "/public_library/$genre/$filename");
     $template->param(AUTHOR => "$first_name $last_name");
@@ -356,7 +311,6 @@ sub titleOfTheDay {
     my $output = $template->output;
     print TODAY "$output";
     close(TODAY);
-    return $index_template;
 }
 
 
