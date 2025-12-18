@@ -6,6 +6,21 @@ Code to be called from command line or web.
 
 =cut
 
+use CGI;
+use DBI; 
+use HTML::Template;
+#use HTML::Entities;
+use Dotenv -load;
+
+use FatalsToEmail    
+  qw(
+      Mailhost localhost
+      Address marcusdelgreco@gmail.com
+      Error_cache /tmp/library.tmp
+      Seconds 60
+      Debug 1
+    );
+
 =head2 main
 
 Support wide array of characters in templates.  Establish database connection.

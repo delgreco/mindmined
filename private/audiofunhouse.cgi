@@ -10,21 +10,6 @@ use lib qw (
     local/lib/perl5/x86_64-linux-thread-multi
 );
 
-use CGI;
-use DBI;
-use HTML::Template;
-use HTML::Entities;
-use Dotenv -load;
-
-use FatalsToEmail    
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/library.tmp
-      Seconds 60
-      Debug 1
-    );
-
 use MindMined;
 
 my $cgiobject = new CGI;
@@ -304,13 +289,15 @@ sub deleteTrack {
 
 =head2 mainInterface()
 
-TODO
+The main Audio Funhouse management view.
 
 =cut
 
 sub mainInterface {
 	my $message = $_[0];
-	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/mainInterface.tmpl');
+	my $template = HTML::Template->new(
+        filename => 'templates/mmpub/audio/mainInterface.tmpl'
+    );
 	my $select = <<~"SQL";
     SELECT name, email, homesite, dir, id 
     FROM rec_artists 
@@ -416,7 +403,7 @@ sub _processTemplate {
 
 =head2 recordingArtistInterface()
 
-TODO
+Screen for managing a recording artist's data.
 
 =cut
 
@@ -426,11 +413,13 @@ sub recordingArtistInterface {
 	my $rec_artist; my $email; my $email_display; my $homesite; my $profile;
 	my $image_url; my $dir; my $published;
 	if ( $id ) {
-		my $select="SELECT name, email, email_display, homesite, profile, image_url, dir, published 
+		my $select = <<~"SQL";
+        SELECT name, email, email_display, homesite, profile, image_url, dir, published 
         FROM rec_artists 
-        WHERE id = ?";
-		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-		$sth->execute($id) || die "execute: $select: $DBI::errstr";
+        WHERE id = ?
+        SQL
+		my $sth = $MindMined::dbh->prepare($select);
+		$sth->execute($id);
 		($rec_artist, $email, $email_display, $homesite, $profile, $image_url, $dir, $published) = $sth->fetchrow_array();
 		$profile =~ s/<br>/\n/g;
 	}
@@ -453,35 +442,43 @@ sub recordingArtistInterface {
 
 =head2 releaseInterface()
 
-TODO
+Screen for managing data for a release.
 
 =cut
 
 sub releaseInterface {
 	my $id=$cgiobject->param('id'); 
-	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/releaseInterface.tmpl');
+	my $template = HTML::Template->new(
+        filename => 'templates/mmpub/audio/releaseInterface.tmpl'
+    );
 	my $release; my $rec_artist_id; my $year; my $image_url;
 	my $filename; my $description; my $store_id;
 	if ( $id ) { 
-		my $select="SELECT `release`, rec_artist, id, year, image_url, filename, description, store_id 
-        FROM releases WHERE id = ?";
-		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-		$sth->execute($id) || die "execute: $select: $DBI::errstr";
+		my $select = <<~"SQL";
+        SELECT `release`, rec_artist, id, year, image_url, filename, description, store_id 
+        FROM releases WHERE id = ?
+        SQL
+		my $sth = $MindMined::dbh->prepare($select);
+		$sth->execute($id);
 		($release, $rec_artist_id, $id, $year, $image_url, $filename, $description, $store_id) = $sth->fetchrow_array();
 	}
 	else {
-		my $select="SELECT YEAR(NOW())";
-		my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-		$sth->execute || die "execute: $select: $DBI::errstr";
+		my $select = <<~"SQL";
+        SELECT YEAR(NOW())
+        SQL
+		my $sth = $MindMined::dbh->prepare($select);
+		$sth->execute;
 		my ($this_year) = $sth->fetchrow_array();
 		$year = qq {$this_year};
 		$image_url = qq {https://www.mindmined.com/audiofun-images/};
 	}
 	# create recording aritst dropdown
-	my $select="SELECT id, name 
-    FROM rec_artists ORDER BY name";
-	my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute || die "execute: $select: $DBI::errstr";
+	my $select = <<~"SQL";
+    SELECT id, name 
+    FROM rec_artists ORDER BY name
+    SQL
+	my $sth = $MindMined::dbh->prepare($select);
+	$sth->execute;
 	my @rec_artist_options;
 	while (my ($id, $rec_artist) = $sth->fetchrow_array()) {
 		my %row;
@@ -493,9 +490,11 @@ sub releaseInterface {
 		push(@rec_artist_options, \%row);
 	}
 	# create product dropdown
-	$select="SELECT id, product FROM products ORDER BY product";
-	$sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-	$sth->execute || die "execute: $select: $DBI::errstr";
+	$select = <<~"SQL";
+    SELECT id, product FROM products ORDER BY product
+    SQL
+	$sth = $MindMined::dbh->prepare($select);
+	$sth->execute;
 	my @product_options;
 	while (my ($id, $product) = $sth->fetchrow_array()) {
 		my %row;
@@ -519,7 +518,7 @@ sub releaseInterface {
 
 =head2 saveRecordingArtist()
 
-TODO
+Insert or update a recording artist.
 
 =cut
 
@@ -598,7 +597,7 @@ sub saveRelease {
 
 =head2 saveTrack()
 
-TODO
+Insert or update a Track.
 
 =cut
 
@@ -637,20 +636,24 @@ sub saveTrack {
 
 =head2 trackInterface()
 
-TODO
+Screen for managing data for a Track.
 
 =cut
 
 sub trackInterface {
 	my $id=$cgiobject->param('id'); 
-	my $t = HTML::Template->new(filename => 'templates/mmpub/audio/trackInterface.tmpl');
+	my $t = HTML::Template->new(
+        filename => 'templates/mmpub/audio/trackInterface.tmpl'
+    );
 	my $url; my $title; my $published; my $release_id; my $length;
 	my $mediatype; my $bitrate;
 	my $add_or_update;
 	if ( $id ) {
 		$add_or_update = 'Update';
-		my $select="SELECT url, title, release_id, length, mediatype, bitrate, published
-        FROM tracks WHERE id = ?";
+		my $select = <<~"SQL";
+        SELECT url, title, release_id, length, mediatype, bitrate, published
+        FROM tracks WHERE id = ?
+        SQL
 		my $sth = $MindMined::dbh->prepare($select);
 		$sth->execute($id);
 		($url, $title, $release_id, $length, $mediatype, $bitrate, $published) = $sth->fetchrow_array();

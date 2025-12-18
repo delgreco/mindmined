@@ -5,40 +5,14 @@ use 5.030;
 
 use lib qw (
     ../lib
+    .
     local/lib/perl5
     local/lib/perl5/x86_64-linux-thread-multi
 );
 
-use CGI;
-use DBI; 
-use HTML::Template;
-use Dotenv -load;
-
-use FatalsToEmail    
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/library.tmp
-      Seconds 60
-      Debug 1
-    );  
+use MindMined;
 
 my $cgiobject = new CGI;
-
-HTML::Template->config(utf8 => 1);
-
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
 
 my $action=$cgiobject->param('action');
 $action = 'mainInterface' if ! $action;
@@ -52,26 +26,29 @@ exit;
 
 =head2 authorInterface
 
-TODO
+Add / manage an author record.
 
 =cut
 
 sub authorInterface {
     my $id=$cgiobject->param('id'); 
-    my $t = HTML::Template->new(filename => "templates/mmpub/library/authorInterface.tmpl");
+    my $t = HTML::Template->new(
+        filename => "templates/mmpub/library/authorInterface.tmpl"
+    );
     my $add_or_update;
     my $email; my $alt_emails; my $email_display; my $homesite;
     my $bio; my $last_name; my $first_name; my $published;
     if ( $id ) {
         my $select = <<~"SQL";
-        SELECT email, alt_emails, email_display, homesite, bio, last_name, first_name, published
+        SELECT email, alt_emails, email_display, homesite, bio, last_name, 
+        first_name, published
         FROM authors 
         WHERE id = ?
         SQL
-        my $sth = $dbh->prepare($select);
+        my $sth = $MindMined::dbh->prepare($select);
         $sth->execute($id);
-        ($email, $alt_emails, $email_display, $homesite, $bio, $last_name, $first_name, $published) = $sth->fetchrow_array();
-        $sth->finish();
+        ($email, $alt_emails, $email_display, $homesite, $bio, $last_name, 
+            $first_name, $published) = $sth->fetchrow_array();
     }
     if ( $email_display eq 'mailto' ) {
         $t->param(MAILTO => 1);
@@ -92,7 +69,7 @@ sub authorInterface {
 
 =head2 batchLibrary
 
-TODO
+Refresh all the pages of the Public Library.
 
 =cut
 
@@ -104,24 +81,25 @@ sub batchLibrary {
         $where = 'id = ?';
         push(@bind_vars, $title_id);
     }
-    my $select = <<"SQL";
-    SELECT pagetitle, genre, body2, image_URL, description, filename, author_id, id, image_alt_text, keywords 
+    my $select = <<~"SQL";
+    SELECT pagetitle, genre, body2, image_URL, description, filename, author_id, 
+    id, image_alt_text, keywords 
     FROM titles
     WHERE $where
-SQL
+    SQL
     # construct the by_title genre indexes
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute(@bind_vars) || die "execute: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute(@bind_vars);
     while (my ($pagetitle, $genre, $body, $image_URL, $description, $filename, $author_id, $id, $image_alt_text, $keywords) = $sth->fetchrow_array()) {
         my $t = HTML::Template->new(filename => "templates/library/title.tmpl");
         # grab information about the author
-        my $select = <<"SQL";
+        my $select = <<~"SQL";
         SELECT last_name, first_name, email, email_display, homesite, bio 
         FROM authors 
-        WHERE id = '$author_id'
-SQL
-        my $sth = $dbh->prepare($select);
-        $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+        WHERE id = ?
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($author_id);
         my ($last_name, $first_name, $email, $email_display, $homesite, $bio) = $sth->fetchrow_array();
         if ( $email_display eq 'mailto' ) {
             $t->param(MAILTO => 1);
@@ -132,9 +110,6 @@ SQL
         }
         $t->param(EMAIL => $email);
         # create the library page
-        ######
-        # substitute variable values
-        ######
         $t->param(TITLE => $pagetitle);
         $t->param(PAGETITLE => "$pagetitle by $first_name $last_name");
         my $author_closeup_file = "${first_name}_${last_name}";
@@ -176,7 +151,7 @@ sub bodyInterface {
     SELECT pagetitle FROM titles 
     WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
     my ($pagetitle) = $sth->fetchrow_array();
     $template->param(PAGETITLE => $pagetitle);
@@ -186,42 +161,48 @@ sub bodyInterface {
 
 =head2 deleteAuthor
 
-TODO
+Given the id for an author, delete that author.
 
 =cut
 
 sub deleteAuthor {
     my $id=$cgiobject->param('id'); 
-    my $select="SELECT first_name, last_name 
+    
+    my $select = <<~"SQL";
+    SELECT first_name, last_name 
     FROM authors 
-    WHERE id = ?";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($id) || die "execute: $select: $DBI::errstr";
+    WHERE id = ?
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($id);
     my ($first_name, $last_name) = $sth->fetchrow_array();
-    $sth->finish();
+    
     my $delete="DELETE FROM authors WHERE id ='$id'";
-    $sth = $dbh->prepare($delete);
-    $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
+    $sth = $MindMined::dbh->prepare($delete);
+    $sth->execute();
+    
     my $message = qq |$first_name $last_name deleted from the database.|;
     mainInterface($message);
 }
 
 =head2 deleteTitle
 
-TODO
+Given the id for a title, delete that title.
 
 =cut
 
 sub deleteTitle {
     my $id=$cgiobject->param('id'); 
-    my $select="SELECT pagetitle 
+    my $select = <<~"SQL";
+    SELECT pagetitle 
     FROM titles 
-    WHERE id = ?";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($id) || die "execute: $select: $DBI::errstr";
+    WHERE id = ?
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($id);
     my ($pagetitle) = $sth->fetchrow_array();
     my $delete="DELETE FROM titles WHERE id = ?";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
     my $message = qq {$pagetitle deleted from the database.};
     mainInterface($message);
@@ -229,7 +210,7 @@ sub deleteTitle {
 
 =head2 _indexLibrary
 
-TODO
+Create the genre and author indexes.
 
 =cut
 
@@ -240,24 +221,30 @@ sub _indexLibrary {
 
 =head2 mainInterface
 
-TODO
+The main Public Library management view.
 
 =cut
 
 sub mainInterface {  # the default interface for managing the Library
     my $message = $_[0];
-    my $template = HTML::Template->new(filename => "templates/mmpub/library/mainInterface.tmpl");
+    my $template = HTML::Template->new(
+        filename => "templates/mmpub/library/mainInterface.tmpl"
+    );
     my $order_by=$cgiobject->param("order_by"); 
-    if ($order_by eq "author") {
+    if ( $order_by eq 'author' ) {
         $order_by = "last_name, first_name";
     }
     else {
         $order_by = "pagetitle";
     }
     # list authors
-    my $select="SELECT last_name, first_name, email, homesite, bio, id FROM authors ORDER BY last_name, first_name";
-    my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    my $select = <<~"SQL";
+    SELECT last_name, first_name, email, homesite, bio, id 
+    FROM authors 
+    ORDER BY last_name, first_name
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute();
     my $i; my @authors;
     while (my ($last_name, $first_name, $email, $homesite, $bio, $id) = $sth->fetchrow_array()) {
         my %row;
@@ -284,7 +271,7 @@ sub mainInterface {  # the default interface for managing the Library
     JOIN authors
     ON titles.author_id = authors.id 
     ORDER BY $order_by";
-    $sth = $dbh->prepare($select);
+    $sth = $MindMined::dbh->prepare($select);
     $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
     my @titles;
     while (my ($title, $genre, $filename, $first_name, $last_name, $id) = $sth->fetchrow_array()) {
@@ -319,26 +306,32 @@ sub _makeAuthorIndexes {
     my $authors_index_template = HTML::Template->new(filename => "templates/library/authors.tmpl");
     my @author_loop;
     # get total authors in library
-    my $select = "SELECT COUNT(*) FROM authors";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    my $select = <<~"SQL";
+    SELECT COUNT(*) FROM authors
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my ($total_authors) = $sth->fetchrow_array();
-    $select = "SELECT first_name, last_name, homesite, email, email_display, bio, id 
+    $select = <<~"SQL";
+    SELECT first_name, last_name, homesite, email, email_display, bio, id 
     FROM authors 
     WHERE published = 1
-    ORDER BY last_name, first_name";
-    $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    ORDER BY last_name, first_name
+    SQL
+    $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     while (my ($first_name, $last_name, $homesite, $email, $email_display, $bio, $id) = $sth->fetchrow_array()) {
         my $author_page_template = HTML::Template->new(filename => "templates/library/author.tmpl");
         # assemble title list
-        my $select = "SELECT pagetitle, genre, filename, image_url
+        my $select = <<~"SQL";
+        SELECT pagetitle, genre, filename, image_url
         FROM titles 
         WHERE author_id = '$id'
         AND published = 'yes'
-        ORDER BY pagetitle";
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        ORDER BY pagetitle
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute;
         my @title_loop;
         while (my ($pagetitle, $genre, $filename, $image_url) = $sth->fetchrow_array()) {
             my $title_url = "https://www.mindmined.com/public_library/$genre/$filename";
@@ -405,17 +398,19 @@ sub _makeAuthorIndexes {
 
 =head2 _makeGenreIndexes
 
-TODO
+Make an index for each genre in the Public Library.
 
 =cut
 
 sub _makeGenreIndexes {
     # get total titles in library
-    my $select = "SELECT COUNT(*) 
+    my $select = <<~"SQL";
+    SELECT COUNT(*) 
     FROM titles 
-    WHERE published = 'yes'";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    WHERE published = 'yes'
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my ($total_titles) = $sth->fetchrow_array();
     # establish the genres and the ways to sort them
     my @genres = (
@@ -433,12 +428,14 @@ sub _makeGenreIndexes {
     );
     foreach my $genre (@genres) {
         # get total titles for this genre
-        my $select = "SELECT COUNT(*) 
+        my $select = <<~"SQL";
+        SELECT COUNT(*) 
         FROM titles 
         WHERE genre = '$genre'
-        AND published  = 'yes'";
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        AND published  = 'yes'
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute;
         my ($genre_total) = $sth->fetchrow_array();
         my $genre_printable = ucfirst($genre);
         if ( $genre_printable eq 'erotic_fiction' ) {
@@ -474,16 +471,18 @@ sub _makeGenreIndexes {
             }
             else {$order_by = ""; $index_type_filename = "";}
             my $title_list;
-            my $select = "SELECT t.pagetitle, t.filename, t.description, 
+            my $select = <<~"SQL";
+            SELECT t.pagetitle, t.filename, t.description, 
             length(t.body), t.year, a.first_name, a.last_name 
             FROM titles AS t
             LEFT JOIN authors AS a
             ON t.author_id = a.id
             WHERE genre = '$genre' 
             AND t.published = 'yes'
-            ORDER BY $order_by";
-            my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-            $sth->execute || die "execute: $select: $DBI::errstr";
+            ORDER BY $order_by
+            SQL
+            my $sth = $MindMined::dbh->prepare($select);
+            $sth->execute;
             my @titles_loop;
             while (my ($pagetitle, $filename, $description, $length, $year, $first_name, $last_name) = $sth->fetchrow_array()) {
                 my %title;
@@ -540,9 +539,9 @@ sub _processTemplate {
     print $output;
 }
 
-=head2 _saveAuthor
+=head2 saveAuthor
 
-TODO
+Add or update an author record.
 
 =cut
 
@@ -563,7 +562,7 @@ sub saveAuthor {   # grab the values submitted
         my $update="UPDATE authors 
         SET email = ?, alt_emails = ?, email_display = ?, homesite = ?, bio = ?, first_name = ?, last_name = ?, published = ?
         WHERE id = ?";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
         my $message = qq {$first_name $last_name has been updated.};
         mainInterface($message);
@@ -571,7 +570,7 @@ sub saveAuthor {   # grab the values submitted
     else {  # add new author
         my $insert="INSERT INTO authors (email, alt_emails, email_display, homesite, bio, first_name, last_name, published) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         $id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -580,7 +579,6 @@ sub saveAuthor {   # grab the values submitted
     }
     batchLibrary();
 }
-
 
 =head2 saveBody
 
@@ -594,12 +592,12 @@ sub saveBody {
     my $select="SELECT pagetitle 
     FROM titles 
     WHERE id = '$id'";
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
     my ($pagetitle) = $sth->fetchrow_array();
     ##
     my $update="UPDATE titles SET body = ? WHERE id = '$id'";
-    $sth = $dbh->prepare($update);
+    $sth = $MindMined::dbh->prepare($update);
     $sth->execute($body) || die "sth->execute($update): $DBI::errstr\n";
     my $message = qq {$pagetitle has been updated.};
 }
@@ -645,7 +643,7 @@ sub saveTitle {
         my $update="UPDATE titles 
         SET published = ?, pagetitle = ?, genre = ?, image_URL = ?, description = ?, filename = ?, year = ?, author_id = ?, image_alt_text = ?, keywords = ? 
         WHERE id = ?";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($published, $pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $id) || die "sth->execute($update): $DBI::errstr\n";
         $message = qq {$pagetitle has been updated.};
     }
@@ -656,7 +654,7 @@ sub saveTitle {
            $content_body .= $_;
         }
         my $insert="INSERT INTO titles (pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $content_body) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         $id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -669,13 +667,13 @@ sub saveTitle {
 
 =head2 titleInterface
 
-TODO
+Add / manage a title in the Public Library.
 
 =cut
 
 sub titleInterface {
     my $id=$cgiobject->param('id'); 
-    my $template = HTML::Template->new(filename => "templates/mmpub/library/titleInterface.tmpl");
+    my $t = HTML::Template->new(filename => "templates/mmpub/library/titleInterface.tmpl");
     my $file_upload;
     my $file_upload_form;
     my $add_or_update;
@@ -686,7 +684,7 @@ sub titleInterface {
         my $select="SELECT published, pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords 
         FROM titles 
         WHERE id = ?";
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute($id) || die "execute: $select: $DBI::errstr";
         ($published, $pagetitle, $this_genre, $image_URL, $description, $filename, $year, $this_author_id, $image_alt_text, $keywords) = $sth->fetchrow_array();
     }
@@ -702,11 +700,13 @@ sub titleInterface {
         push(@genre_options, \%row);
     }
     # get list of authors
-    my $select="SELECT first_name, last_name, id 
+    my $select = <<~"SQL";
+    SELECT first_name, last_name, id 
     FROM authors 
-    ORDER BY last_name, first_name";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    ORDER BY last_name, first_name
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my @author_options;
     while (my ($first_name, $last_name, $author_id) = $sth->fetchrow_array()) {
         my %row;
@@ -720,21 +720,21 @@ sub titleInterface {
         $image_alt_text = qq |image for $pagetitle|;
     }
     if ($published eq 'yes') {
-        $template->param(PUBLISHED => 1);
+        $t->param(PUBLISHED => 1);
     }
-    $template->param(ADD_OR_UPDATE => $add_or_update);
-    $template->param(AUTHOR_OPTIONS => \@author_options);
-    $template->param(GENRE_OPTIONS => \@genre_options);
-    $template->param(PAGETITLE => $pagetitle);
-    #$template->param(GENRE => $this_genre);
-    $template->param(IMAGE_URL => $image_URL);
-    $template->param(DESCRIPTION => $description);
-    $template->param(FILENAME => $filename);
-    $template->param(YEAR => $year);
-    $template->param(IMAGE_ALT_TEXT => $image_alt_text);
-    $template->param(KEYWORDS => $keywords);
-    $template->param(ID => $id);
-    return ($template, $message);
+    $t->param(ADD_OR_UPDATE => $add_or_update);
+    $t->param(AUTHOR_OPTIONS => \@author_options);
+    $t->param(GENRE_OPTIONS => \@genre_options);
+    $t->param(PAGETITLE => $pagetitle);
+    #$t->param(GENRE => $this_genre);
+    $t->param(IMAGE_URL => $image_URL);
+    $t->param(DESCRIPTION => $description);
+    $t->param(FILENAME => $filename);
+    $t->param(YEAR => $year);
+    $t->param(IMAGE_ALT_TEXT => $image_alt_text);
+    $t->param(KEYWORDS => $keywords);
+    $t->param(ID => $id);
+    return ($t, $message);
 }
 
 =head2 updateBody
@@ -757,7 +757,7 @@ sub updateBody {
     my $update="UPDATE titles 
     SET body = ?, body2 = ? 
     WHERE id = ?";
-    my $sth = $dbh->prepare($update);
+    my $sth = $MindMined::dbh->prepare($update);
     $sth->execute($content_body, $content_body, $id) || die "sth->execute($update): $DBI::errstr\n";
     my $message = qq |Body of piece has been updated.|;
     batchLibrary($id);
