@@ -5,38 +5,14 @@ use 5.030;
 
 use lib qw (
     ../lib
+    .
     local/lib/perl5
     local/lib/perl5/x86_64-linux-thread-multi
 );
 
-use CGI;
-use HTML::Template;
-use DBI;
-use Dotenv -load;
-
-use FatalsToEmail    
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/gallery.tmp
-      Seconds 60
-      Debug 1
-    );  
+use MindMined;
 
 my $cgiobject = new CGI;
-
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
 
 my $action=$cgiobject->param('action');
 $action = 'mainInterface' if ! $action;
@@ -66,7 +42,7 @@ sub artistInterface {
         FROM artists 
         WHERE id = ?
         SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute($id) || die "execute: $select: $DBI::errstr";
         ($first_name, $last_name, $email, $homesite, $dir, $bio) = $sth->fetchrow_array();
         $add_or_update = 'Update';
@@ -100,7 +76,7 @@ sub batchPublish {
     FROM artists 
     ORDER BY last_name, first_name
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
     $sth->execute || die "execute: $select: $DBI::errstr";
     my @artist_list;
     while (my ($first_name, $last_name, $email, $homesite, $dir, $bio, $artist_id) = $sth->fetchrow_array()) {
@@ -114,7 +90,7 @@ sub batchPublish {
         SELECT COUNT(*) FROM gallery 
         WHERE artist_id = $artist_id
         SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute || die "execute: $select: $DBI::errstr";
         my ($total_images_from_artist) = $sth->fetchrow_array();
         ### get a list of the artist's images
@@ -123,7 +99,7 @@ sub batchPublish {
         FROM gallery 
         WHERE artist_id = $artist_id
         SQL
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute || die "execute: $select: $DBI::errstr";
         # reset filename counter
         my $counter = 0;
@@ -207,7 +183,7 @@ sub compile_images {
     SELECT year FROM gallery 
     WHERE artist_id = ?
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
     $sth->execute($artist_id) || die "execute: $select: $DBI::errstr";
     my @entry_loop;
     my $counter = 0;
@@ -237,12 +213,12 @@ sub deleteArtist {
     SELECT first_name, last_name 
     FROM artists WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
     $sth->execute($id) || die "execute: $select: $DBI::errstr";
     my ($first_name, $last_name) = $sth->fetchrow_array();
     #
     my $delete="DELETE FROM artists WHERE id = ?";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     my $message = qq {$first_name $last_name deleted from the database.};
@@ -257,13 +233,15 @@ TODO
 
 sub deleteImage {
     my $id=$cgiobject->param("id"); 
-    my $select="SELECT title FROM gallery WHERE id = '$id'";
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    my $select =  <<~"SQL";
+    SELECT title FROM gallery WHERE id = ?
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($id);
     my ($title) = $sth->fetchrow_array();
     #
     my $delete="DELETE FROM gallery WHERE id ='$id'";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     my $message = qq {$title deleted from the database.};
@@ -282,9 +260,12 @@ sub imageInterface {
     my $title; my $url; my $description; my $year;
     my $image_id; my $artist_id;
     if ($id) {
-        my $select="SELECT title, url, description, year, id, artist_id FROM gallery WHERE id = '$id'";
-        my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        my $select = <<~"SQL";
+        SELECT title, url, description, year, id, artist_id 
+        FROM gallery WHERE id = ?
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($id);
         ($title, $url, $description, $year, $image_id, $artist_id) = $sth->fetchrow_array();
         $t->param(TITLE => $title);
         $t->param(URL => $url);
@@ -293,12 +274,12 @@ sub imageInterface {
         $t->param(ID => $id);
     }
     # get artist info
-    my $select = <<"SQL";
+    my $select = <<~"SQL";
     SELECT first_name, last_name, id 
     FROM artists ORDER BY last_name, first_name
-SQL
-    my $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my @artist_loop;
     while (my ($first_name, $last_name, $id_option) = $sth->fetchrow_array()) {
         my %row;
@@ -323,7 +304,7 @@ sub mainInterface {  # the default interface for managing the Gallery
     my $t = HTML::Template->new(filename => "templates/mmpub/gallery/mainInterface.tmpl");
     my $message = $_[0];
     my $select="SELECT last_name, first_name, email, id FROM artists ORDER BY last_name"; 
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
     my $last_name; my $first_name; my $email; my $artist_id;
     my @artists_loop; my $i;
@@ -343,9 +324,11 @@ sub mainInterface {  # the default interface for managing the Gallery
         push(@artists_loop, \%row);
     }
     $t->param(ARTISTS => \@artists_loop);
-    $select="SELECT title, url, description, id, artist_id FROM gallery ORDER BY title"; 
-    $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $select = <<~"SQL";
+    SELECT title, url, description, id, artist_id FROM gallery ORDER BY title
+    SQL
+    $sth = $MindMined::dbh->prepare($select);
+    $sth->execute();
     my @images_loop;
     while (my ($title, $url, $description, $image_id, $artist_id) = $sth->fetchrow_array()) {
         my %row;
@@ -353,9 +336,11 @@ sub mainInterface {  # the default interface for managing the Gallery
             $description = substr($description, 0, 69);
             $description .= qq {...};
         }
-        my $select="SELECT last_name, first_name FROM artists WHERE id = '$artist_id'"; 
-        my $sth = $dbh->prepare($select);
-        $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+        my $select = <<~"SQL";
+        SELECT last_name, first_name FROM artists WHERE id = ?
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($artist_id);
         my ($last_name, $first_name) = $sth->fetchrow_array();
         $i++;
         if ($i % 2 == 0) {
@@ -416,14 +401,14 @@ sub saveArtist {
     if ($id) {
         # when editing or viewing, query the database about the product
         my $update="UPDATE artists SET first_name = ? ,last_name = ?, email = ?, homesite = ?, bio = ? WHERE id = '$id'";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($first_name, $last_name, $email, $homesite, $bio) || die "sth->execute($update): $DBI::errstr\n";
         $sth->finish();
         $message = qq {$first_name $last_name updated.};
     }
     else {
         my $insert="INSERT INTO artists (first_name, last_name, email, homesite, dir, bio) VALUES (?, ?, ?, ?, ?, ?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($first_name, $last_name, $email, $homesite, $dir, $bio) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         my $id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -452,7 +437,7 @@ sub saveImage {
         my $update="UPDATE gallery 
         SET title = ?, url = ?, description = ?, year = ? 
         WHERE id = ?";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($title, $url, $description, $year, $id) || die "sth->execute($update): $DBI::errstr\n";
         $sth->finish();
         $message = qq |$title updated.|;
@@ -462,7 +447,7 @@ sub saveImage {
         (title, url, description, year, artist_id) 
         VALUES 
         (?, ?, ?, ?, ?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($title, $url, $description, $year, $artist_id) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         my $id = $sth->{mysql_insertid} || $sth->{insertid}; 
@@ -471,7 +456,7 @@ sub saveImage {
         my $select="SELECT first_name, last_name 
         FROM artists 
         WHERE id = ?";
-        $sth = $dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
         $sth->execute($artist_id) || die "execute: $select: $DBI::errstr";
         my ($first_name, $last_name) = $sth->fetchrow_array();
         $message = qq |$title added.|;

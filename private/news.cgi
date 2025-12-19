@@ -5,38 +5,12 @@ use 5.030;
 
 use lib qw (
     ../lib
+    .
     local/lib/perl5
     local/lib/perl5/x86_64-linux-thread-multi
 );
 
-use CGI;
-use DBI;
-use HTML::Entities;
-use HTML::Template;
-use Dotenv -load;
-
-use FatalsToEmail qw(
-    Mailhost localhost
-    Address marcusdelgreco@gmail.com
-    Error_cache /tmp/library.tmp
-    Seconds 60
-    Debug 1
-);
-
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
-
-HTML::Template->config(utf8 => 1);
+use MindMined;
 
 my $debug = 0;
 
@@ -57,7 +31,7 @@ $action = 'mainInterface' if ! $action;
 
 =head2 assembleNewsletter()
 
-TODO
+Create and store new edition of newsletter from 'pending' newsbits.
 
 =cut
 
@@ -65,13 +39,15 @@ sub assembleNewsletter {
     my $month = $cgiobject->param('month');
     my $year = $cgiobject->param('year');
     my $number = $cgiobject->param('number');
+  
+    # assemble 'pending' newsbits for newsletter
     my $select = <<~"SQL";
     SELECT newsbit, newsbit_URL, newsbit_image_URL, category, `datetime` 
     FROM news 
     WHERE newsletter_status = 'pending'
     SQL
-    my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute();
     my $library; my $gallery; my $audio; my $theatre; my $other;
     while (my ($newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime) = $sth->fetchrow_array()) {
         if ($category eq 'library') {$library .= "$newsbit\n$newsbit_URL\n\n"}
@@ -91,15 +67,20 @@ sub assembleNewsletter {
     $t->param(THEATRE => $theatre);
     $t->param(OTHER => $other);
     my $body = $t->output;
+
     my $insert="INSERT INTO newsletters (month, year, number, body) VALUES (?, ?, ?, ?)";
-    $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+    $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
     $sth->execute($month, $year, $number, $body) || die "execute: $insert: $DBI::errstr";
+    
     # rebuild newsletter index
     refreshNewsletterIndex();
-    # set all newsbit in database to status 'sent'
+    
+    # set all newsbits to status 'sent'
+    # (no longer pending)
     my $update="UPDATE news SET newsletter_status = 'sent'";
-    $sth = $dbh->prepare($update);
+    $sth = $MindMined::dbh->prepare($update);
     $sth->execute() || die "sth->execute($update): $DBI::errstr\n";
+
     my $message = 'Latest newsletter has been assembled.';
     mainInterface($message);
 }
@@ -117,7 +98,7 @@ sub deleteNewsbit {
     FROM news 
     WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
     my ($newsbit) = $sth->fetchrow_array();
     # keep it short
@@ -127,7 +108,7 @@ sub deleteNewsbit {
     my $sql = <<~"SQL";
     DELETE FROM news WHERE id = ?
     SQL
-    my $rows_deleted = $dbh->do(qq{$sql}, undef, $id);
+    my $rows_deleted = $MindMined::dbh->do(qq{$sql}, undef, $id);
     if ( $rows_deleted != 1 ) {
         print STDERR "ERROR: $rows_deleted rows deleted.";
     }
@@ -151,7 +132,7 @@ sub mainInterface {
     FROM news 
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my @newsbits; my $i;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $datetime, $newsletter_status, $id) = $sth->fetchrow_array()) {
@@ -193,7 +174,7 @@ sub mainInterface {
     SELECT number, month, year, body FROM newsletters 
     ORDER BY number DESC
     SQL
-    $sth = $dbh->prepare($select);
+    $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my @newsletter_options;
     while (my ($number, $month, $year, $body) = $sth->fetchrow_array()) {
@@ -227,7 +208,7 @@ sub newsbitInterface {
     FROM news
     WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
     my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published, $image_caption) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
@@ -246,7 +227,7 @@ sub newsbitInterface {
     FROM news_categories
     ORDER BY id
     SQL
-    $sth = $dbh->prepare($select);
+    $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     while (my ($name) = $sth->fetchrow_array()) {
         my %row;
@@ -270,13 +251,15 @@ Screen to add or edit a newsletter.
 
 sub newsletterInterface {
     my $number=$cgiobject->param('number'); 
-    my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsletterInterface.tmpl');
+    my $t = HTML::Template->new(
+        filename => 'templates/mmpub/news/newsletterInterface.tmpl'
+    );
     my $select = <<~"SQL";
     SELECT month, year, body 
     FROM newsletters 
     WHERE `number` = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($number);
     my ($month, $year, $body) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
@@ -299,7 +282,7 @@ sub publishRSS {
     SELECT YEAR(NOW()), DAYOFMONTH(NOW()), DAYNAME(NOW()), MONTHNAME(NOW()), 
     DATE_FORMAT(NOW(), '%H:%i:%s')
     SQL
-    my $sth = $dbh->prepare($select_now);
+    my $sth = $MindMined::dbh->prepare($select_now);
     $sth->execute();
     my ($year, $dayofmonth, $dayname, $monthname, $time) = $sth->fetchrow_array();
     # parse out needed date bits
@@ -328,7 +311,7 @@ sub publishRSS {
     WHERE published = 1
     ORDER BY `datetime` DESC
     SQL
-    $sth = $dbh->prepare($select_newsbit);
+    $sth = $MindMined::dbh->prepare($select_newsbit);
     $sth->execute();
     my $counter = 0;
     while (my ($newsbit, $title, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $year, $dayofmonth, $dayname, $monthname, $time) = $sth->fetchrow_array()) {
@@ -389,7 +372,7 @@ sub refreshAudioIndex {
     AND published = 1
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my @newsbits;
     while (my ($newsbit, $newsbit_url, $newsbit_image_url, $category, $datetime, $newsletter_status) = $sth->fetchrow_array()) {
@@ -431,7 +414,7 @@ sub refreshGalleryIndex {
     AND published = 1
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     while (my ($newsbit, $newsbit_url, $newsbit_image_url, $datetime) = $sth->fetchrow_array()) {
         my %row;
@@ -469,7 +452,7 @@ sub refreshIndex {
     WHERE published = 1
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my $counter = 0; my @newsbits;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month, $image_caption) = $sth->fetchrow_array()) {
@@ -526,8 +509,8 @@ sub refreshLibraryIndex {
     AND published = 1
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute();
     while (my ($newsbit, $newsbit_url, $newsbit_image_url, $datetime) = $sth->fetchrow_array()) {
         my %row;
         $counter++;
@@ -546,7 +529,8 @@ sub refreshLibraryIndex {
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
     my $library_index = "$ENV{DOCUMENT_ROOT}/public_library/index.html";
-    open(LIBRARY_INDEX, ">:encoding(utf8)", "$library_index") || die("Unable to open file '$library_index': $!");
+    open(LIBRARY_INDEX, ">:encoding(utf8)", "$library_index") 
+        || die("Unable to open file '$library_index': $!");
     print LIBRARY_INDEX "$output";
     close LIBRARY_INDEX;
 }
@@ -592,7 +576,7 @@ sub refreshNewsIndex {
     ON news_categories.name = news.category
     ORDER BY datetime DESC
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my $counter = 0; my @newsbits;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $image_caption, $category, $category_url, $category_icon_url, $datetime, $month, $published) = $sth->fetchrow_array()) {
@@ -697,7 +681,7 @@ sub saveNewsbit {
         SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?, image_caption = ?
         WHERE id = ?
         SQL
-        my $rows_updated = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $image_caption, $id);
+        my $rows_updated = $MindMined::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $published, $image_caption, $id);
         if ( $rows_updated != 1 ) {
             print STDERR "ERROR: $rows_updated rows updated.\n";
         }
@@ -707,7 +691,7 @@ sub saveNewsbit {
         my $select = <<~"SQL";
         SELECT NOW()
         SQL
-        my $sth = $dbh->prepare($select);
+        my $sth = $MindMined::dbh->prepare($select);
         $sth->execute();
         my ($datetime) = $sth->fetchrow_array();
         # set newsletter status to 'pending'
@@ -718,12 +702,12 @@ sub saveNewsbit {
         VALUES 
         (?, ?, ?, ?, ?, ?, ?, ?, ?)
         SQL
-        my $rows_inserted = $dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published, $image_caption);
+        my $rows_inserted = $MindMined::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published, $image_caption);
         if ( $rows_inserted != 1 ) {
             print STDERR "ERROR: $rows_inserted rows inserted.\n";
         }
         # grab the automatically incremented id that was generated
-        $id = $dbh->{mysql_insertid} || $dbh->{insertid};
+        $id = $MindMined::dbh->{mysql_insertid} || $MindMined::dbh->{insertid};
         $message = qq |Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.|;
     }
     refreshNews();
@@ -745,7 +729,7 @@ sub saveNewsletter {
     UPDATE newsletters SET body = ? 
     WHERE `number` = ?
     SQL
-    my $rows_updated = $dbh->do(qq{$sql}, undef, $body, $number);
+    my $rows_updated = $MindMined::dbh->do(qq{$sql}, undef, $body, $number);
     if ( $rows_updated != 1 ) {
         print STDERR "ERROR: $rows_updated rows updated.\n";
     }

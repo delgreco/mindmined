@@ -10,40 +10,11 @@ use lib qw(
     .
 );
 
-use CGI;
-use CGI::Carp('fatalsToBrowser');
-use DBI; 
-use HTML::Template;
-use Dotenv -load;
-
-use FatalsToEmail
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/songs.tmp
-      Seconds 60
-      Debug 1
-    );
-
-# force templates to be read as UTF-8
-HTML::Template->config(utf8 => 1);
+use MindMined;
 
 my $debug = 0;
 
 my $cgiobject = new CGI;
-
-my $dbh = DBI->connect(
-    "DBI:mysql:$ENV{DB_NAME}",
-    $ENV{DB_USER},
-    $ENV{DB_PASS},
-    {
-        RaiseError           => 1,
-        ShowErrorStatement   => 1,
-        AutoCommit           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_socket         => $ENV{DB_SOCKET},
-    }
-) || die "Connect failed: $DBI::errstr\n"; 
 
 my $action=$cgiobject->param('action');
 $action = qq {mainInterface} if ! $action;
@@ -69,19 +40,19 @@ sub addToSongBook {
     WHERE song_id = ?
     AND songbook_id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($song_id, $songbook_id);
     my ($id) = $sth->fetchrow_array();
     # unless this song/songbook association already exists, add it
     unless ($id) {
         my $insert="INSERT INTO songs_songbooks (song_id, songbook_id) VALUES (?, ?)";
-        my $sth = $dbh->prepare($insert);
+        my $sth = $MindMined::dbh->prepare($insert);
         $sth->execute($song_id, $songbook_id);
         # give it a starting setlist frequency of '5'
         my $count = 5;
         while ($count > 0) {
             my $insert="INSERT INTO song_frequency (song_id, songbook_id) VALUES (?, ?)";
-            my $sth = $dbh->prepare($insert);
+            my $sth = $MindMined::dbh->prepare($insert);
             $sth->execute($song_id, $songbook_id);
             $sth->finish();
             $count--;
@@ -120,7 +91,7 @@ sub adjustFrequency {
 
 =head2 deleteSong
 
-TODO
+Given the id for a song, delete that song and return to the main screen.
 
 =cut
 
@@ -128,7 +99,7 @@ sub deleteSong {
     my $id=$cgiobject->param('id');
     my $delete="DELETE FROM songs
     WHERE id = ?";
-    my $sth = $dbh->prepare($delete);
+    my $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     my $message = qq |Song deleted.|;
@@ -137,7 +108,7 @@ sub deleteSong {
 
 =head2 mainInterface
 
-TODO
+The main Songbook screen.
 
 =cut
 
@@ -165,7 +136,7 @@ sub mainInterface {
     GROUP BY title, credits, more_info_url, audio_url, chordsheet, songs.id
     ORDER BY title
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute(@bind_variables);
     my $i;
     my @songs;
@@ -225,14 +196,14 @@ sub removeFromSongBook {
     my $delete="DELETE FROM songs_songbooks 
     WHERE song_id ='$song_id'
     AND songbook_id = '$songbook_id'";
-    my $sth = $dbh->prepare($delete);
+    my $sth = $MindMined::dbh->prepare($delete);
     $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     # remove all rows of this song/songbook in the frequency table
     $delete="DELETE FROM song_frequency 
     WHERE song_id ='$song_id'
     AND songbook_id = '$songbook_id'";
-    $sth = $dbh->prepare($delete);
+    $sth = $MindMined::dbh->prepare($delete);
     $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     $message = qq |Song removed from SongBook.|;
@@ -259,27 +230,26 @@ sub setlistInterface {
         foreach my $id (@song_ids) {
             my %row;
             # determine current frequency rate for this song
-            my $select = <<"SQL";
+            my $select = <<~"SQL";
             SELECT COUNT(*) 
             FROM song_frequency 
             WHERE song_id = ?
             AND songbook_id = ?
-SQL
-            my $sth = $dbh->prepare($select);
-            $sth->execute($id, $songbook_id) || die "sth->execute($select): $DBI::errstr\n";
+            SQL
+            my $sth = $MindMined::dbh->prepare($select);
+            $sth->execute($id, $songbook_id);
             my ($freq) = $sth->fetchrow_array();
-            if ($freq == 1) {
+            if ( $freq == 1 ) {
                 $row{DELETE} = 1;
             }
-            $select = <<"SQL";
+            $select = <<~"SQL";
             SELECT title, credits, audio_url 
             FROM songs 
             WHERE id = ?
-SQL
-            $sth = $dbh->prepare($select);
-            $sth->execute($id) || die "sth->execute($select): $DBI::errstr\n";
+            SQL
+            $sth = $MindMined::dbh->prepare($select);
+            $sth->execute($id);
             my ($title, $credits, $audio_url) = $sth->fetchrow_array();
-            $sth->finish();
             $row{TITLE} = $title;
             $row{CREDITS} = $credits;
             $row{ID} = $id;
@@ -288,16 +258,16 @@ SQL
         }
     }
     else {  # generate fresh setlist
-        my $select = <<"SQL";
+        my $select = <<~"SQL";
         SELECT song_frequency.song_id, songs.title, songs.credits, songs.audio_url 
         FROM song_frequency 
         JOIN songs 
         ON song_frequency.song_id = songs.id 
-        WHERE song_frequency.songbook_id = '$songbook_id'
+        WHERE song_frequency.songbook_id = ?
         ORDER BY RAND()
-SQL
-        my $sth = $dbh->prepare($select);
-        $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($songbook_id);
         my $i = 0;
         my @song_ids;
         while (my ($id, $title, $credits, $audio_url) = $sth->fetchrow_array()) {
@@ -315,17 +285,18 @@ SQL
             $setlist .= qq {$id,};
             my %row;
             # determine current frequency rate for this song
-            my $select = <<"SQL";
+            my $select = <<~"SQL";
             SELECT COUNT(*) 
             FROM song_frequency 
             WHERE song_id = ?
             AND songbook_id = ?
-SQL
-            my $sth = $dbh->prepare($select);
-            $sth->execute($id, $songbook_id) || die "sth->execute($select): $DBI::errstr\n";
+            SQL
+            my $sth = $MindMined::dbh->prepare($select);
+            $sth->execute($id, $songbook_id);
             my ($freq) = $sth->fetchrow_array();
-            # there will either be one occurrence of this song in the table, in which case we present an upgrade-or-delete option
-            if ($freq == 1) {
+            # there will either be zero or one occurrence of this song 
+            # in the table, so then we present an upgrade-or-delete option
+            if ( $freq == 1 ) {
                 $row{DELETE} = 1;
             }
             $row{TITLE} = $title;
@@ -375,13 +346,13 @@ sub saveSong {
         my $update="UPDATE songs 
         SET title = ?, credits = ?, more_info_url = ?, audio_url = ?, chordsheet = ?
         WHERE id = '$id'";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "sth->execute($update): $DBI::errstr\n";
         $message = qq {$title has been updated.};
     }
     else {  # add new song
         my $insert="INSERT INTO songs (title, credits, more_info_url, audio_url, chordsheet) VALUES (?, ?, ?, ?, ?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         $id = $sth->{mysql_insertid} || $sth->{insertid};
@@ -405,13 +376,13 @@ sub saveSongbook {
         my $update="UPDATE songbooks 
         SET name = ?
         WHERE id = ?";
-        my $sth = $dbh->prepare($update);
+        my $sth = $MindMined::dbh->prepare($update);
         $sth->execute($name, $id) || die "sth->execute($update): $DBI::errstr\n";
         $message = qq |The songbook called $name has been updated.|;
     }
     else {  # add new songbook
         my $insert="INSERT INTO songbooks (name) VALUES (?)";
-        my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($name) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated
         $id = $sth->{mysql_insertid} || $sth->{insertid};
@@ -438,8 +409,8 @@ sub songInterface {
     FROM songs 
     WHERE id = ?
 SQL
-    my $sth = $dbh->prepare($select);
-    $sth->execute($id) || die "sth->execute($select): $DBI::errstr\n";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($id);
     my ($title, $credits, $more_info_url, $audio_url, $chordsheet) = $sth->fetchrow_array();
     $template = _getSongsTopTemplate(
         template    => $template,
@@ -474,7 +445,7 @@ sub songbookInterface {
     FROM songbooks 
     WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
     my ($name) = $sth->fetchrow_array();
     $template->param(NAME => $name);
@@ -505,7 +476,7 @@ sub viewSong {
     FROM songs 
     WHERE id = ?
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
     my ($title, $credits, $more_info_url, $audio_url, $chordsheet) = $sth->fetchrow_array();
     $t->param(TITLE => $title);
@@ -540,7 +511,7 @@ sub _downgradeSong {
     WHERE song_id = '$song_id' 
     AND songbook_id = '$songbook_id'
     LIMIT 1";
-    my $sth = $dbh->prepare($delete);
+    my $sth = $MindMined::dbh->prepare($delete);
     $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
     my $message = qq {Song has been downgraded.};
@@ -562,7 +533,7 @@ sub _getAddSongsDropdown {
     my $select="SELECT title, id
     FROM songs
     ORDER BY title";
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
     my @songs;
     while (my ($title, $id) = $sth->fetchrow_array()) {
@@ -593,7 +564,7 @@ sub _getSongBookDropdown {
     FROM songbooks 
     ORDER BY name
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my @songbooks;
     while (my ($name, $id) = $sth->fetchrow_array()) {
@@ -620,7 +591,7 @@ sub _getSongBookName {
     my $select="SELECT name
     FROM songbooks
     WHERE id = '$songbook_id'";
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
     my @songs;
     my ($name) = $sth->fetchrow_array();
@@ -644,7 +615,7 @@ sub _getSongBookSongIDs {
     WHERE songs_songbooks.songbook_id = ?
     ORDER BY songs.title
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($songbook_id);
     my @song_ids;
     while (my ($id) = $sth->fetchrow_array()) {
@@ -677,7 +648,7 @@ sub _getToday {
     my $select = <<~"SQL";
     SELECT DAYOFMONTH(NOW()), MONTHNAME(NOW()), YEAR(NOW())
     SQL
-    my $sth = $dbh->prepare($select);
+    my $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
     my ($day_of_month, $month, $year) = $sth->fetchrow_array();
     return($day_of_month, $month, $year);
@@ -694,7 +665,7 @@ sub _upgradeSong {
     my $setlist = $_[1];
     my $songbook_id = $_[2];
     my $insert="INSERT INTO song_frequency (song_id, songbook_id) VALUES (?, ?)";
-    my $sth = $dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
     $sth->execute($song_id, $songbook_id) || die "execute: $insert: $DBI::errstr";
     $sth->finish();
     my $message = qq {Song has been upgraded.};
