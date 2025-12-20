@@ -12,13 +12,31 @@ use lib qw(
 
 use MindMined;
 
-my $debug = 0;
+my $cgi = new CGI;
 
-my $cgiobject = new CGI;
+my $action=$cgi->param('action');
+$action = 'mainInterface' if ! $action;
 
-my $action=$cgiobject->param('action');
-$action = qq {mainInterface} if ! $action;
-&{\&{$action}}();
+my %dispatch = (
+    addToSongBook      => \&addToSongBook,
+    adjustFrequency    => \&adjustFrequency,
+    deleteSong         => \&deleteSong,
+    mainInterface      => \&mainInterface,
+    removeFromSongBook => \&removeFromSongBook,
+    saveSong           => \&saveSong,
+    saveSongBook       => \&saveSongBook,
+    setlistInterface   => \&setlistInterface,
+    songInterface      => \&songInterface,
+    songBookInterface  => \&songBookInterface,
+    viewSong           => \&viewSong,
+);
+
+if ( my $code = $dispatch{$action} ) {
+    $code->();
+}
+else {
+    die "Unknown action: $action\n";
+}
 exit;
 
 =head2 addToSongBook
@@ -28,8 +46,8 @@ TODO
 =cut
 
 sub addToSongBook {
-    my $song_id=$cgiobject->param('song_id');
-    my $songbook_id=$cgiobject->param('songbook_id');
+    my $song_id=$cgi->param('song_id');
+    my $songbook_id=$cgi->param('songbook_id');
     my $message;
     #my $song_id = $_[0];
     #my $songbook_id = $_[1];
@@ -72,9 +90,9 @@ TODO
 =cut
 
 sub adjustFrequency {
-    my $id=$cgiobject->param("id"); 
-    my $setlist=$cgiobject->param("setlist"); 
-    my $songbook_id=$cgiobject->param("songbook_id"); 
+    my $id=$cgi->param("id"); 
+    my $setlist=$cgi->param("setlist"); 
+    my $songbook_id=$cgi->param("songbook_id"); 
     if ($id =~ /^\+/) {
         $id =~ s/\+//;
         _upgradeSong($id, $setlist, $songbook_id);
@@ -96,7 +114,7 @@ Given the id for a song, delete that song and return to the main screen.
 =cut
 
 sub deleteSong {
-    my $id=$cgiobject->param('id');
+    my $id=$cgi->param('id');
     my $delete="DELETE FROM songs
     WHERE id = ?";
     my $sth = $MindMined::dbh->prepare($delete);
@@ -115,7 +133,7 @@ The main Songbook screen.
 sub mainInterface { 
     my $message = $_[0];
     my $songbook_id = $_[1];
-    $songbook_id=$cgiobject->param('songbook_id') if ! $songbook_id;
+    $songbook_id=$cgi->param('songbook_id') if ! $songbook_id;
     my $t = HTML::Template->new(filename => 'templates/songs/songsMainInterface.tmpl');
     my $where; my @bind_variables;
     if ( $songbook_id ) {
@@ -187,11 +205,9 @@ TODO
 =cut
 
 sub removeFromSongBook {
-    my $song_id=$cgiobject->param('song_id'); 
-    my $songbook_id=$cgiobject->param('songbook_id'); 
+    my $song_id=$cgi->param('song_id'); 
+    my $songbook_id=$cgi->param('songbook_id'); 
     my $message;
-    #my $song_id = $_[0];
-    #my $songbook_id = $_[1];
     # disassociate song from songbook
     my $delete="DELETE FROM songs_songbooks 
     WHERE song_id ='$song_id'
@@ -210,6 +226,72 @@ sub removeFromSongBook {
     mainInterface($message, $songbook_id);
 }
 
+=head2 saveSong
+
+TODO
+
+=cut
+
+sub saveSong {
+    my $title=$cgi->param("title"); 
+    my $credits=$cgi->param("credits"); 
+    my $more_info_url=$cgi->param("more_info_url"); 
+    my $audio_url=$cgi->param("audio_url"); 
+    my $chordsheet=$cgi->param("chordsheet"); 
+    my $id=$cgi->param("id"); 
+    # return to a specific songbook if we started there
+    my $songbook_id=$cgi->param("songbook_id"); 
+    my $message;
+    if ($id) {  # update existing song
+        my $update="UPDATE songs 
+        SET title = ?, credits = ?, more_info_url = ?, audio_url = ?, chordsheet = ?
+        WHERE id = '$id'";
+        my $sth = $MindMined::dbh->prepare($update);
+        $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "sth->execute($update): $DBI::errstr\n";
+        $message = qq {$title has been updated.};
+    }
+    else {  # add new song
+        my $insert="INSERT INTO songs (title, credits, more_info_url, audio_url, chordsheet) VALUES (?, ?, ?, ?, ?)";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "execute: $insert: $DBI::errstr";
+        # grab the automatically incremented id that was generated
+        $id = $sth->{mysql_insertid} || $sth->{insertid};
+        $sth->finish();
+        $message = qq {$title has been added.};
+    }
+    mainInterface($message, $songbook_id);
+}
+
+=head2 saveSongBook
+
+TODO
+
+=cut
+
+sub saveSongBook {
+    my $name=$cgi->param('name'); 
+    my $id=$cgi->param('id'); 
+    my $message;
+    if ($id) {  # update existing song
+        my $update="UPDATE songbooks 
+        SET name = ?
+        WHERE id = ?";
+        my $sth = $MindMined::dbh->prepare($update);
+        $sth->execute($name, $id) || die "sth->execute($update): $DBI::errstr\n";
+        $message = qq |The songbook called $name has been updated.|;
+    }
+    else {  # add new songbook
+        my $insert="INSERT INTO songbooks (name) VALUES (?)";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        $sth->execute($name) || die "execute: $insert: $DBI::errstr";
+        # grab the automatically incremented id that was generated
+        $id = $sth->{mysql_insertid} || $sth->{insertid};
+        $sth->finish();
+        $message = qq |A songbook called $name has been added.|;
+    }
+    mainInterface($message, $id);
+}
+
 =head2 setListInterface
 
 TODO
@@ -219,10 +301,10 @@ TODO
 sub setlistInterface {
     my $setlist = $_[0];
     my $message = $_[1];
-    my $limit=$cgiobject->param('number_of_songs'); 
-    my $songbook_id=$cgiobject->param('songbook_id'); 
-    my $number_of_songs=$cgiobject->param('number_of_songs'); 
-    my $include_exercises=$cgiobject->param('include_exercises'); 
+    my $limit=$cgi->param('number_of_songs'); 
+    my $songbook_id=$cgi->param('songbook_id'); 
+    my $number_of_songs=$cgi->param('number_of_songs'); 
+    my $include_exercises=$cgi->param('include_exercises'); 
     my $t = HTML::Template->new(filename => 'templates/songs/songsSetlistInterface.tmpl');
     my @songs_loop;
     if ( $setlist ) {  # if only adjusting frequency, reprint remembered setlist
@@ -326,72 +408,6 @@ sub setlistInterface {
     print $output;
 }
 
-=head2 saveSong
-
-TODO
-
-=cut
-
-sub saveSong {
-    my $title=$cgiobject->param("title"); 
-    my $credits=$cgiobject->param("credits"); 
-    my $more_info_url=$cgiobject->param("more_info_url"); 
-    my $audio_url=$cgiobject->param("audio_url"); 
-    my $chordsheet=$cgiobject->param("chordsheet"); 
-    my $id=$cgiobject->param("id"); 
-    # return to a specific songbook if we started there
-    my $songbook_id=$cgiobject->param("songbook_id"); 
-    my $message;
-    if ($id) {  # update existing song
-        my $update="UPDATE songs 
-        SET title = ?, credits = ?, more_info_url = ?, audio_url = ?, chordsheet = ?
-        WHERE id = '$id'";
-        my $sth = $MindMined::dbh->prepare($update);
-        $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "sth->execute($update): $DBI::errstr\n";
-        $message = qq {$title has been updated.};
-    }
-    else {  # add new song
-        my $insert="INSERT INTO songs (title, credits, more_info_url, audio_url, chordsheet) VALUES (?, ?, ?, ?, ?)";
-        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
-        $sth->execute($title, $credits, $more_info_url, $audio_url, $chordsheet) || die "execute: $insert: $DBI::errstr";
-        # grab the automatically incremented id that was generated
-        $id = $sth->{mysql_insertid} || $sth->{insertid};
-        $sth->finish();
-        $message = qq {$title has been added.};
-    }
-    mainInterface($message, $songbook_id);
-}
-
-=head2 saveSongbook
-
-TODO
-
-=cut
-
-sub saveSongbook {
-    my $name=$cgiobject->param('name'); 
-    my $id=$cgiobject->param('id'); 
-    my $message;
-    if ($id) {  # update existing song
-        my $update="UPDATE songbooks 
-        SET name = ?
-        WHERE id = ?";
-        my $sth = $MindMined::dbh->prepare($update);
-        $sth->execute($name, $id) || die "sth->execute($update): $DBI::errstr\n";
-        $message = qq |The songbook called $name has been updated.|;
-    }
-    else {  # add new songbook
-        my $insert="INSERT INTO songbooks (name) VALUES (?)";
-        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
-        $sth->execute($name) || die "execute: $insert: $DBI::errstr";
-        # grab the automatically incremented id that was generated
-        $id = $sth->{mysql_insertid} || $sth->{insertid};
-        $sth->finish();
-        $message = qq |A songbook called $name has been added.|;
-    }
-    mainInterface($message, $id);
-}
-
 =head2 songInterface
 
 TODO
@@ -400,10 +416,12 @@ TODO
 
 sub songInterface { 
     my $message = $_[0];
-    my $id=$cgiobject->param("id"); 
+    my $id=$cgi->param("id"); 
     # so we can return to the songbook we were looking at
-    my $songbook_id=$cgiobject->param("songbook_id");
-    my $template = HTML::Template->new(filename => 'templates/songs/songInterface.tmpl');
+    my $songbook_id=$cgi->param("songbook_id");
+    my $template = HTML::Template->new(
+        filename => 'templates/songs/songInterface.tmpl'
+    );
     my $select = <<"SQL";
     SELECT title, credits, more_info_url, audio_url, chordsheet
     FROM songs 
@@ -438,8 +456,10 @@ TODO
 
 sub songbookInterface { 
     my $message = $_[0];
-    my $id=$cgiobject->param('id'); 
-    my $template = HTML::Template->new(filename => 'templates/songs/songbookInterface.tmpl');
+    my $id=$cgi->param('id'); 
+    my $template = HTML::Template->new(
+        filename => 'templates/songs/songbookInterface.tmpl'
+    );
     my $select = <<~"SQL";
     SELECT name 
     FROM songbooks 
@@ -467,9 +487,9 @@ TODO
 =cut
 
 sub viewSong {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     # so we can return to the songbook we were looking at
-    my $songbook_id=$cgiobject->param('songbook_id');
+    my $songbook_id=$cgi->param('songbook_id');
     my $t = HTML::Template->new(filename => 'templates/songs/viewSong.tmpl');
     my $select = <<~"SQL";
     SELECT title, credits, more_info_url, audio_url, chordsheet
@@ -530,11 +550,13 @@ sub _getAddSongsDropdown {
     # we are telling this sub that we want the songs that DON'T
     # appear in this songbook yet, so they can be added via this dropdown
     my @songbook_song_ids = _getSongBookSongIDs($songbook_id); 
-    my $select="SELECT title, id
+    my $select = <<~"SQL";
+    SELECT title, id
     FROM songs
-    ORDER BY title";
+    ORDER BY title
+    SQL
     my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my @songs;
     while (my ($title, $id) = $sth->fetchrow_array()) {
         if (grep(/^$id$/, @songbook_song_ids)) {
@@ -545,7 +567,6 @@ sub _getAddSongsDropdown {
         $row{ID} = $id;
         push(@songs, \%row);
     }
-    $sth->finish();
     $template->param(SONGS_OPTIONS => \@songs);
     return $template;
 }
@@ -588,14 +609,15 @@ TODO
 
 sub _getSongBookName {
     my $songbook_id = $_[0];
-    my $select="SELECT name
+    my $select = <<~"SQL";
+    SELECT name
     FROM songbooks
-    WHERE id = '$songbook_id'";
+    WHERE id = ?
+    SQL
     my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute($songbook_id);
     my @songs;
     my ($name) = $sth->fetchrow_array();
-    $sth->finish();
     return $name;
 }
 
