@@ -12,27 +12,46 @@ use lib qw (
 
 use MindMined;
 
-my $cgiobject = new CGI;
+my $cgi = new CGI;
 
-my $action=$cgiobject->param('action');
+my $action=$cgi->param('action');
 $action = 'mainInterface' if ! $action;
 
-# run the sub by the same name as $action
-my ($template, $message) = &{\&{$action}}();
+my %dispatch = (
+    artist        => \&artist,
+    batchPublish  => \&batchPublish,
+    deleteArtist  => \&deleteArtist,
+    deleteImage   => \&deleteImage,
+    image         => \&image,
+    mainInterface => \&mainInterface,
+    saveArtist    => \&saveArtist,
+    saveImage     => \&saveImage,
+);
 
-_processTemplate($template, $message);
+my ($template, $message);
+if ( my $code = $dispatch{$action} ) {
+    $code->();
+    # run the sub by the same name as $action
+    ($template, $message) = &{\&{$action}}();
+    _processTemplate($template, $message);
+}
+else {
+    die "Unknown action: $action\n";
+}
 
 exit;
 
-=head2 artistInterface()
+=head2 artist()
 
-TODO
+Screen for managing an artist record.
 
 =cut
 
-sub artistInterface {
-    my $id=$cgiobject->param('id');
-    my $t = HTML::Template->new(filename => "templates/mmpub/gallery/artistInterface.tmpl");
+sub artist {
+    my $id=$cgi->param('id');
+    my $t = HTML::Template->new(
+        filename => "templates/mmpub/gallery/artistInterface.tmpl"
+    );
     my $first_name; my $last_name; my $email;
     my $homesite; my $dir; my $bio;
     my $add_or_update;
@@ -42,8 +61,8 @@ sub artistInterface {
         FROM artists 
         WHERE id = ?
         SQL
-        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute($id) || die "execute: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($id);
         ($first_name, $last_name, $email, $homesite, $dir, $bio) = $sth->fetchrow_array();
         $add_or_update = 'Update';
     }
@@ -63,21 +82,27 @@ sub artistInterface {
 
 =head2 batchPublish()
 
-TODO
+Refresh all artist and image pages, as well as the artist index.
 
 =cut
 
 sub batchPublish {
-    my $artist_index_template = HTML::Template->new(filename => "templates/gallery/artist_index.tmpl");
-    my $artist_template = HTML::Template->new(filename => "templates/gallery/artist.tmpl");
-    my $image_template = HTML::Template->new(filename => "templates/gallery/image.tmpl");
+    my $artist_index_template = HTML::Template->new(
+        filename => "templates/gallery/artist_index.tmpl"
+    );
+    my $artist_template = HTML::Template->new(
+        filename => "templates/gallery/artist.tmpl"
+    );
+    my $image_template = HTML::Template->new(
+        filename => "templates/gallery/image.tmpl"
+    );
     my $select = <<~"SQL";
     SELECT first_name, last_name, email, homesite, dir, bio, id 
     FROM artists 
     ORDER BY last_name, first_name
     SQL
-    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute || die "execute: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
     my @artist_list;
     while (my ($first_name, $last_name, $email, $homesite, $dir, $bio, $artist_id) = $sth->fetchrow_array()) {
         my %artist;
@@ -90,8 +115,8 @@ sub batchPublish {
         SELECT COUNT(*) FROM gallery 
         WHERE artist_id = $artist_id
         SQL
-        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute;
         my ($total_images_from_artist) = $sth->fetchrow_array();
         ### get a list of the artist's images
         my $select = <<~"SQL";
@@ -99,8 +124,8 @@ sub batchPublish {
         FROM gallery 
         WHERE artist_id = $artist_id
         SQL
-        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute || die "execute: $select: $DBI::errstr";
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute;
         # reset filename counter
         my $counter = 0;
         my @image_list;
@@ -110,7 +135,7 @@ sub batchPublish {
             $image_link{FILENAME} = "${counter}.html";
             $image_link{TITLE} = $title;
             $image_link{YEAR} = $year;
-            $image_template = compile_images($artist_id, $image_template, $counter);
+            $image_template = _compile_images($artist_id, $image_template, $counter);
             $image_template->param(TITLE => $title);
             $image_template->param(URL => $url);
             # populate arrow links for previous and next image pages
@@ -169,70 +194,38 @@ sub batchPublish {
     mainInterface($message);
 }
 
-=head2 compileImage()
-
-TODO
-
-=cut
-
-sub compile_images {
-    my $artist_id = $_[0]; 
-    my $t = $_[1];
-    my $image_num = $_[2];
-    my $select = <<~"SQL";
-    SELECT year FROM gallery 
-    WHERE artist_id = ?
-    SQL
-    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($artist_id) || die "execute: $select: $DBI::errstr";
-    my @entry_loop;
-    my $counter = 0;
-    while (my ($year) = $sth->fetchrow_array()) {
-         $counter++;
-         my %entry;
-         $entry{COUNTER} = $counter;
-         $entry{FILENAME} = "${counter}.html";
-         unless ( $counter == $image_num ) {
-            $entry{LINKED} = 1;
-         }
-         push(@entry_loop, \%entry);
-    }
-    $t->param(ENTRIES => \@entry_loop);
-    return $t;
-}
-
 =head2 deleteArtist()
 
-TODO
+Given the id for an artist, delete that artist record.
 
 =cut
 
 sub deleteArtist {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     my $select = <<~"SQL";
     SELECT first_name, last_name 
     FROM artists WHERE id = ?
     SQL
-    my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-    $sth->execute($id) || die "execute: $select: $DBI::errstr";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($id);
     my ($first_name, $last_name) = $sth->fetchrow_array();
     #
     my $delete="DELETE FROM artists WHERE id = ?";
     $sth = $MindMined::dbh->prepare($delete);
     $sth->execute($id) || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
-    my $message = qq {$first_name $last_name deleted from the database.};
+    my $message = "$first_name $last_name deleted from the database.";
     mainInterface($message);
 }
 
 =head2 deleteImage()
 
-TODO
+Given the id for an image, delete that image record.
 
 =cut
 
 sub deleteImage {
-    my $id=$cgiobject->param("id"); 
+    my $id=$cgi->param("id"); 
     my $select =  <<~"SQL";
     SELECT title FROM gallery WHERE id = ?
     SQL
@@ -248,18 +241,20 @@ sub deleteImage {
     mainInterface($message);
 }
 
-=head2 imageInterface()
+=head2 image()
 
 TODO
 
 =cut
 
-sub imageInterface {
-    my $t = HTML::Template->new(filename => "templates/mmpub/gallery/imageInterface.tmpl");
-    my $id=$cgiobject->param("id"); 
+sub image {
+    my $id=$cgi->param("id"); 
+    my $t = HTML::Template->new(
+        filename => "templates/mmpub/gallery/imageInterface.tmpl"
+    );
     my $title; my $url; my $description; my $year;
     my $image_id; my $artist_id;
-    if ($id) {
+    if ( $id ) {
         my $select = <<~"SQL";
         SELECT title, url, description, year, id, artist_id 
         FROM gallery WHERE id = ?
@@ -283,7 +278,7 @@ sub imageInterface {
     my @artist_loop;
     while (my ($first_name, $last_name, $id_option) = $sth->fetchrow_array()) {
         my %row;
-        if ($artist_id == $id_option) {$row{SELECTED} = 'SELECTED';}
+        if ( $artist_id == $id_option ) { $row{SELECTED} = 1; }
         $row{ARTIST_ID} = $id_option;
         $row{FIRST_NAME} = $first_name;
         $row{LAST_NAME} = $last_name;
@@ -296,16 +291,21 @@ sub imageInterface {
 
 =head2 mainInterface()
 
-TODO
+The main Gallery management screen.
 
 =cut
 
 sub mainInterface {  # the default interface for managing the Gallery
-    my $t = HTML::Template->new(filename => "templates/mmpub/gallery/mainInterface.tmpl");
+    my $t = HTML::Template->new(
+        filename => "templates/mmpub/gallery/mainInterface.tmpl"
+    );
     my $message = $_[0];
-    my $select="SELECT last_name, first_name, email, id FROM artists ORDER BY last_name"; 
+    my $select = <<~"SQL";
+    SELECT last_name, first_name, email, id 
+    FROM artists ORDER BY last_name
+    SQL
     my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    $sth->execute();
     my $last_name; my $first_name; my $email; my $artist_id;
     my @artists_loop; my $i;
     while (my ($last_name, $first_name, $email, $artist_id) = $sth->fetchrow_array()) {
@@ -325,7 +325,8 @@ sub mainInterface {  # the default interface for managing the Gallery
     }
     $t->param(ARTISTS => \@artists_loop);
     $select = <<~"SQL";
-    SELECT title, url, description, id, artist_id FROM gallery ORDER BY title
+    SELECT title, url, description, id, artist_id 
+    FROM gallery ORDER BY title
     SQL
     $sth = $MindMined::dbh->prepare($select);
     $sth->execute();
@@ -368,22 +369,6 @@ sub mainInterface {  # the default interface for managing the Gallery
     return ($t, $message);
 }
 
-=head2 _processTemplate()
-
-TODO
-
-=cut
-
-sub _processTemplate {
-    my $t = $_[0];
-    my $message = $_[1];
-    $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
-    #$t->param(MESSAGE => $message);
-    my $output = $t->output;
-    print "Content-type: text/html\n\n";
-    print $output;
-}
-
 =head2 saveArtist()
 
 TODO
@@ -391,13 +376,13 @@ TODO
 =cut
 
 sub saveArtist {
-    my $first_name=$cgiobject->param("first_name"); 
-    my $last_name=$cgiobject->param("last_name"); 
-    my $email=$cgiobject->param("email"); 
-    my $homesite=$cgiobject->param("homesite"); 
-    my $dir=$cgiobject->param("dir"); 
-    my $bio=$cgiobject->param("bio"); 
-    my $id=$cgiobject->param("id"); 
+    my $first_name=$cgi->param("first_name"); 
+    my $last_name=$cgi->param("last_name"); 
+    my $email=$cgi->param("email"); 
+    my $homesite=$cgi->param("homesite"); 
+    my $dir=$cgi->param("dir"); 
+    my $bio=$cgi->param("bio"); 
+    my $id=$cgi->param("id"); 
     if ($id) {
         # when editing or viewing, query the database about the product
         my $update="UPDATE artists SET first_name = ? ,last_name = ?, email = ?, homesite = ?, bio = ? WHERE id = '$id'";
@@ -426,12 +411,12 @@ TODO
 =cut
 
 sub saveImage {
-    my $title=$cgiobject->param('title'); 
-    my $url=$cgiobject->param('url'); 
-    my $description=$cgiobject->param('description'); 
-    my $year=$cgiobject->param('year'); 
-    my $artist_id=$cgiobject->param('artist_id'); 
-    my $id=$cgiobject->param('id'); 
+    my $title=$cgi->param('title'); 
+    my $url=$cgi->param('url'); 
+    my $description=$cgi->param('description'); 
+    my $year=$cgi->param('year'); 
+    my $artist_id=$cgi->param('artist_id'); 
+    my $id=$cgi->param('id'); 
     my $message;
     if ($id) {
         my $update="UPDATE gallery 
@@ -464,7 +449,55 @@ sub saveImage {
     mainInterface($message);
 }
 
+=head1 INTERNAL SUBROUTINES
 
+=head2 _compile_images()
+
+TODO
+
+=cut
+
+sub _compile_images {
+    my $artist_id = $_[0]; 
+    my $t = $_[1];
+    my $image_num = $_[2];
+    my $select = <<~"SQL";
+    SELECT year FROM gallery 
+    WHERE artist_id = ?
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute($artist_id);
+    my @entry_loop;
+    my $counter = 0;
+    while (my ($year) = $sth->fetchrow_array()) {
+         $counter++;
+         my %entry;
+         $entry{COUNTER} = $counter;
+         $entry{FILENAME} = "${counter}.html";
+         unless ( $counter == $image_num ) {
+            $entry{LINKED} = 1;
+         }
+         push(@entry_loop, \%entry);
+    }
+    $t->param(ENTRIES => \@entry_loop);
+    return $t;
+}
+
+=head2 _processTemplate()
+
+TODO
+
+=cut
+
+sub _processTemplate {
+    my $t = $_[0];
+    my $message = $_[1];
+    $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
+    #$t->param(MESSAGE => $message);
+    my $output = $t->output;
+    print "Content-type: text/html\n\n";
+    print $output;
+}
 
 =head1 AUTHORS
 
