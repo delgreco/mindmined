@@ -12,14 +12,39 @@ use lib qw (
 
 use MindMined;
 
-my $cgiobject = new CGI;
+my $cgi = new CGI;
 
-my $action=$cgiobject->param('action');
+my $action=$cgi->param('action');
 $action = 'mainInterface' if ! $action;
 
-my ($template, $message) = &{\&{$action}}();
+my %dispatch = (
+    batchFunhouse       => \&batchFunhouse,
+    batchRecArtistPages => \&batchRecArtistPages,
+    batchReleasePages   => \&batchReleasePages,
+    deleteRecArtist     => \&deleteRecArtist,
+    deleteRelease       => \&deleteRelease,
+    deleteTrack         => \&deleteTrack,
+    mainInterface       => \&mainInterface,
+    recordingArtist     => \&recordingArtist,
+    release             => \&release,
+    saveRecArtist       => \&saveRecArtist,
+    saveRelease         => \&saveRelease,
+    saveImage           => \&saveImage,
+    track               => \&track,
+);
 
-_processTemplate($template, $message);
+my ($template, $message);
+if ( my $code = $dispatch{$action} ) {
+    $code->();
+    # run the sub by the same name as $action
+    ($template, $message) = &{\&{$action}}();
+    _processTemplate($template, $message);
+}
+else {
+    die "Unknown action: $action\n";
+}
+
+exit;
 
 =head2 batchFunhouse()
 
@@ -224,7 +249,7 @@ sub batchReleasePages {
     close(RELEASE_LIST);
 }
 
-=head2 deleteRecordingArtist
+=head2 deleteRecArtist
 
 Given a recording artist id, delete that recording artist.
 
@@ -232,8 +257,8 @@ TODO: put some failsafes in places.
 
 =cut
 
-sub deleteRecordingArtist {
-	my $id=$cgiobject->param("id"); 
+sub deleteRecArtist {
+	my $id=$cgi->param("id"); 
 	my $select = <<~"SQL";
     SELECT name FROM rec_artists WHERE id = ?
     SQL
@@ -256,7 +281,7 @@ Given a release id, delete that release.
 =cut
 
 sub deleteRelease {
-	my $id=$cgiobject->param('id'); 
+	my $id=$cgi->param('id'); 
 	my $select="SELECT 'release' FROM releases WHERE id = ?";
 	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute($id);
@@ -275,7 +300,7 @@ Given a track id, delete that track.
 =cut
 
 sub deleteTrack {
-	my $id=$cgiobject->param("id"); 
+	my $id=$cgi->param("id"); 
 	my $select="SELECT title FROM tracks WHERE id = '$id'";
 	my $sth = $MindMined::dbh->prepare($select);
 	$sth->execute;
@@ -385,30 +410,14 @@ sub mainInterface {
 	return ($template, $message);
 }
 
-=head2 _processTemplate()
-
-TODO
-
-=cut
-
-sub _processTemplate {
-	my $template = $_[0];
-	my $message = $_[1];
-	$template->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
-	$template->param(MESSAGE => $message);
-	my $output = $template->output;
-	print "Content-type: text/html\n\n";
-	print $output;
-}
-
-=head2 recordingArtistInterface()
+=head2 recordingArtist()
 
 Screen for managing a recording artist's data.
 
 =cut
 
-sub recordingArtistInterface {
-	my $id=$cgiobject->param("id"); 
+sub recordingArtist {
+	my $id=$cgi->param("id"); 
 	my $template = HTML::Template->new(filename => 'templates/mmpub/audio/recordingArtistInterface.tmpl');
 	my $rec_artist; my $email; my $email_display; my $homesite; my $profile;
 	my $image_url; my $dir; my $published;
@@ -440,14 +449,14 @@ sub recordingArtistInterface {
 	return ($template, $message);
 }
 
-=head2 releaseInterface()
+=head2 release()
 
 Screen for managing data for a release.
 
 =cut
 
-sub releaseInterface {
-	my $id=$cgiobject->param('id'); 
+sub release {
+	my $id=$cgi->param('id'); 
 	my $template = HTML::Template->new(
         filename => 'templates/mmpub/audio/releaseInterface.tmpl'
     );
@@ -516,22 +525,22 @@ sub releaseInterface {
 	return ($template, $message);
 }
 
-=head2 saveRecordingArtist()
+=head2 saveRecArtist()
 
 Insert or update a recording artist.
 
 =cut
 
-sub saveRecordingArtist {
-	my $rec_artist=$cgiobject->param("rec_artist"); 
-	my $published=$cgiobject->param("published"); 
-	my $dir=$cgiobject->param("dir"); 
-	my $email=$cgiobject->param("email"); 
-	my $email_display=$cgiobject->param("email_display"); 
-	my $homesite=$cgiobject->param("homesite"); 
-	my $profile=$cgiobject->param("profile"); 
-	my $image_url=$cgiobject->param("image_url"); 
-	my $id=$cgiobject->param("id"); 
+sub saveRecArtist {
+	my $rec_artist=$cgi->param("rec_artist"); 
+	my $published=$cgi->param("published"); 
+	my $dir=$cgi->param("dir"); 
+	my $email=$cgi->param("email"); 
+	my $email_display=$cgi->param("email_display"); 
+	my $homesite=$cgi->param("homesite"); 
+	my $profile=$cgi->param("profile"); 
+	my $image_url=$cgi->param("image_url"); 
+	my $id=$cgi->param("id"); 
     $published = $published ? 1 : 0;
     my $message;
 	if ( $id ) {
@@ -568,14 +577,14 @@ TODO
 =cut
 
 sub saveRelease {
-	my $release=$cgiobject->param('release'); 
-	my $filename=$cgiobject->param('filename'); 
-	my $rec_artist_id=$cgiobject->param('rec_artist_id'); 
-	my $year=$cgiobject->param('year'); 
-	my $store_id=$cgiobject->param('store_id') || 0; 
-	my $description=$cgiobject->param('description'); 
-	my $image_url=$cgiobject->param('image_url'); 
-	my $id=$cgiobject->param('id');
+	my $release=$cgi->param('release'); 
+	my $filename=$cgi->param('filename'); 
+	my $rec_artist_id=$cgi->param('rec_artist_id'); 
+	my $year=$cgi->param('year'); 
+	my $store_id=$cgi->param('store_id') || 0; 
+	my $description=$cgi->param('description'); 
+	my $image_url=$cgi->param('image_url'); 
+	my $id=$cgi->param('id');
 	if ( $id ) {
 		my $update="UPDATE releases SET `release` = ?, filename = ?, year = ?, description = ?, image_url = ?, store_id = ?, rec_artist = ? 
 		WHERE id = ?";
@@ -602,14 +611,14 @@ Insert or update a Track.
 =cut
 
 sub saveTrack {
-	my $url=$cgiobject->param('url'); 
-	my $title=$cgiobject->param('title'); 
-	my $published=$cgiobject->param('published'); 
-	my $release_id=$cgiobject->param('release_id'); 
-	my $length=$cgiobject->param('length'); 
-	my $mediatype=$cgiobject->param('mediatype'); 
-	my $bitrate=$cgiobject->param('bitrate'); 
-	my $id=$cgiobject->param('id'); 
+	my $url=$cgi->param('url'); 
+	my $title=$cgi->param('title'); 
+	my $published=$cgi->param('published'); 
+	my $release_id=$cgi->param('release_id'); 
+	my $length=$cgi->param('length'); 
+	my $mediatype=$cgi->param('mediatype'); 
+	my $bitrate=$cgi->param('bitrate'); 
+	my $id=$cgi->param('id'); 
     $published = $published ? 1 : 0;
 	if ( $id ) {
 		my $update="UPDATE tracks 
@@ -634,14 +643,14 @@ sub saveTrack {
 	}
 }
 
-=head2 trackInterface()
+=head2 track()
 
 Screen for managing data for a Track.
 
 =cut
 
-sub trackInterface {
-	my $id=$cgiobject->param('id'); 
+sub track {
+	my $id=$cgi->param('id'); 
 	my $t = HTML::Template->new(
         filename => 'templates/mmpub/audio/trackInterface.tmpl'
     );
@@ -691,5 +700,23 @@ sub trackInterface {
 	$t->param(BITRATE => $bitrate);
 	$t->param(ID => $id);
 	return ($t, $message);
+}
+
+=head1 INTERNAL SUBROUTINES
+
+=head2 _processTemplate()
+
+TODO
+
+=cut
+
+sub _processTemplate {
+	my $template = $_[0];
+	my $message = $_[1];
+	$template->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
+	$template->param(MESSAGE => $message);
+	my $output = $template->output;
+	print "Content-type: text/html\n\n";
+	print $output;
 }
 
