@@ -9,7 +9,7 @@ Code to be called from command line or web.
 use CGI;
 use DBI; 
 use HTML::Template;
-#use HTML::Entities;
+use HTML::Entities;
 use Dotenv -load;
 
 use FatalsToEmail    
@@ -48,7 +48,7 @@ our $template_path = "$doc_root/cgi-bin/private/templates";
 
 =head2 batchTrackList()
 
-Refresh C</audio/alpha_by_track.html> with the latest data.:w
+Refresh C</audio/alpha_by_track.html> with the latest data.
 
 =cut
 

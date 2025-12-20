@@ -12,10 +12,8 @@ use lib qw (
 
 use MindMined;
 
-my $debug = 0;
-
-my $cgiobject = new CGI;
-my $action=$cgiobject->param("action");
+my $cgi = new CGI;
+my $action=$cgi->param("action");
 
 if ( @ARGV && $ARGV[0] eq "--refresh" ) {
     # when called this way, we need to manually define doc root
@@ -25,8 +23,31 @@ if ( @ARGV && $ARGV[0] eq "--refresh" ) {
     exit;
 } 
 
+my $action=$cgi->param('action');
 $action = 'mainInterface' if ! $action;
-&{\&{$action}}();
+
+my %dispatch = (
+    assembleNewsletter  => \&assembleNewsletter,
+    deleteNewsbit       => \&deleteNewsbit,
+    mainInterface       => \&mainInterface,
+    newsbitInterface    => \&newsbitInterface,
+    newsletterInterface => \&newsletterInterface,
+    refreshAudioIndex   => \&refreshAudioIndex,
+    refreshGalleryIndex => \&refreshGalleryIndex,
+    refreshIndex        => \&refreshIndex,
+    refreshLibraryIndex => \&refreshLibraryIndex,
+    refreshNews         => \&refreshNews,
+    refreshNewsIndex    => \&refreshNewsIndex,
+    saveNewsbit         => \&saveNewsbit,
+    saveNewsletter      => \&saveNewsletter,
+);
+
+if ( my $code = $dispatch{$action} ) {
+    $code->();
+}
+else {
+    die "Unknown action: $action\n";
+}
 
 
 =head2 assembleNewsletter()
@@ -36,9 +57,9 @@ Create and store new edition of newsletter from 'pending' newsbits.
 =cut
 
 sub assembleNewsletter {
-    my $month = $cgiobject->param('month');
-    my $year = $cgiobject->param('year');
-    my $number = $cgiobject->param('number');
+    my $month = $cgi->param('month');
+    my $year = $cgi->param('year');
+    my $number = $cgi->param('number');
   
     # assemble 'pending' newsbits for newsletter
     my $select = <<~"SQL";
@@ -92,7 +113,7 @@ Given the id for a newsbit, delete it.
 =cut
 
 sub deleteNewsbit {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     my $select = <<~"SQL";
     SELECT newsbit 
     FROM news 
@@ -201,7 +222,7 @@ Add or edit a newsbit.
 =cut
 
 sub newsbitInterface {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsbitInterface.tmpl');
     my $select = <<~"SQL";
     SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, `datetime`, published, image_caption
@@ -250,7 +271,7 @@ Screen to add or edit a newsletter.
 =cut
 
 sub newsletterInterface {
-    my $number=$cgiobject->param('number'); 
+    my $number=$cgi->param('number'); 
     my $t = HTML::Template->new(
         filename => 'templates/mmpub/news/newsletterInterface.tmpl'
     );
@@ -331,7 +352,7 @@ sub publishRSS {
         my $year = substr($datetime, 0, 4);
         my $groovy_date = qq {$month\.$day\.$year};
         my $filename = _getNewsbitFilename($title, $datetime);
-        $title = encode_entities($title);
+        $title = HTML::Entities::encode_entities($title);
         # $newsbit = encode_entities($newsbit);
         my $local_url = "https://www.mindmined.com/news/archive/$filename";
         # $newsbit_URL = $local_url unless $newsbit_URL;
@@ -552,7 +573,7 @@ sub refreshNews {
     my $datetime = `date`;
     chomp($datetime);
     if ( $command_line_call ) {
-        print LOG "$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.\n" if $debug;
+        print LOG "$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.\n";
     }
     else {
         my $message = qq |News has been refreshed at news/, library/, audio/, and gallery/.  RSS Feed also refreshed.|;
@@ -632,15 +653,15 @@ Optionally, upload an image file.  This image will be saved in C<news_images/> d
 =cut
 
 sub saveNewsbit {
-    my $title=$cgiobject->param('title');
-    my $published=$cgiobject->param('published');
-    my $newsbit=$cgiobject->param('newsbit');
-    my $newsbit_URL=$cgiobject->param('newsbit_URL');
-    my $image=$cgiobject->param('image');
-    my $newsbit_image_URL=$cgiobject->param('newsbit_image_URL');
-    my $image_caption=$cgiobject->param('image_caption');
-    my $category=$cgiobject->param('category'); 
-    my $id=$cgiobject->param('id'); 
+    my $title=$cgi->param('title');
+    my $published=$cgi->param('published');
+    my $newsbit=$cgi->param('newsbit');
+    my $newsbit_URL=$cgi->param('newsbit_URL');
+    my $image=$cgi->param('image');
+    my $newsbit_image_URL=$cgi->param('newsbit_image_URL');
+    my $image_caption=$cgi->param('image_caption');
+    my $category=$cgi->param('category'); 
+    my $id=$cgi->param('id'); 
     $published = $published ? 1 : 0;
     my $message;
     if ( $image ) {
@@ -665,7 +686,7 @@ sub saveNewsbit {
             print UPLOADFILE $contents;
         }
         else {
-            my $fh = $cgiobject->param('image');
+            my $fh = $cgi->param('image');
             while( <$fh> ) {
                 print UPLOADFILE;
                 $contents .= $_;
@@ -720,10 +741,10 @@ Update the metadata for a newsletter.
 =cut
 
 sub saveNewsletter {  
-    my $number=$cgiobject->param('number'); 
-    my $month=$cgiobject->param('month'); 
-    my $year=$cgiobject->param('year'); 
-    my $body=$cgiobject->param('body'); 
+    my $number=$cgi->param('number'); 
+    my $month=$cgi->param('month'); 
+    my $year=$cgi->param('year'); 
+    my $body=$cgi->param('body'); 
     my $message;
     my $sql = <<~"SQL";
     UPDATE newsletters SET body = ? 
@@ -737,6 +758,8 @@ sub saveNewsletter {
     refreshNews();
     mainInterface($message);
 }
+
+=head1 INTERNAL SUBROUTINES
 
 =head2 _getNewsbitFilename()
 

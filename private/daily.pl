@@ -10,25 +10,9 @@ use lib qw (
     local/lib/perl5/x86_64-linux-thread-multi
 );
 
-use CGI;
-use DBI;
-use HTML::Template;
-use Dotenv -load;
-
-use FatalsToEmail    
-  qw(
-      Mailhost localhost
-      Address marcusdelgreco@gmail.com
-      Error_cache /tmp/library.tmp
-      Seconds 60
-      Debug 1
-    );
-
 use open qw( :std :encoding(UTF-8) );
 
 use MindMined;
-
-my $debug = 0;
 
 if ( @ARGV ) { 
     $ARGV[0] =~ s/-//;  # remove dash from option
@@ -97,7 +81,7 @@ sub dailyBatch {
     makeOtherPages();
     my $datetime = `date`;
     chomp($datetime);
-    unless ( $ENV{TERM} ) {
+    if ( $ENV{TERM} ) {
         print "$datetime, daily.pl: Daily features template refreshed.\n";
         print "Others refreshed too.\n";
         print "Run news.cgi --refresh to update these to the homepage.\n";
