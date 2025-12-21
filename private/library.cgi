@@ -12,26 +12,46 @@ use lib qw (
 
 use MindMined;
 
-my $cgiobject = new CGI;
+my $cgi = new CGI;
 
-my $action=$cgiobject->param('action');
+my $action=$cgi->param('action');
 $action = 'mainInterface' if ! $action;
 
-# run the sub by the same name as $action
-my ($template, $message) = &{\&{$action}}();
+my %dispatch = (
+    author        => \&author,
+    batchLibrary  => \&batchLibrary,
+    bodyInterface => \&bodyInterface,
+    deleteAuthor  => \&deleteAuthor,
+    deleteTitle   => \&deleteTitle,
+    mainInterface => \&mainInterface,
+    saveAuthor    => \&saveAuthor,
+    saveBody      => \&saveBody,
+    saveTitle     => \&saveTitle,
+    title         => \&title,
+    updateBody    => \&updateBody,
+);
 
-_processTemplate($template, $message);
+my ($template, $message);
+if ( my $code = $dispatch{$action} ) {
+    $code->();
+    # run the sub by the same name as $action
+    ($template, $message) = &{\&{$action}}();
+    _processTemplate($template, $message);
+}
+else {
+    die "Unknown action: $action\n";
+}
 
 exit;
 
-=head2 authorInterface
+=head2 author
 
 Add / manage an author record.
 
 =cut
 
-sub authorInterface {
-    my $id=$cgiobject->param('id'); 
+sub author {
+    my $id=$cgi->param('id'); 
     my $t = HTML::Template->new(
         filename => "templates/mmpub/library/authorInterface.tmpl"
     );
@@ -144,7 +164,7 @@ TODO
 =cut
 
 sub bodyInterface {
-    my $id=$cgiobject->param('id');
+    my $id=$cgi->param('id');
     my $template = HTML::Template->new(filename => "templates/mmpub/library/bodyInterface.tmpl");
     # get pagetitle
     my $select = <<~"SQL";
@@ -166,7 +186,7 @@ Given the id for an author, delete that author.
 =cut
 
 sub deleteAuthor {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     
     my $select = <<~"SQL";
     SELECT first_name, last_name 
@@ -192,7 +212,7 @@ Given the id for a title, delete that title.
 =cut
 
 sub deleteTitle {
-    my $id=$cgiobject->param('id'); 
+    my $id=$cgi->param('id'); 
     my $select = <<~"SQL";
     SELECT pagetitle 
     FROM titles 
@@ -208,17 +228,6 @@ sub deleteTitle {
     mainInterface($message);
 }
 
-=head2 _indexLibrary
-
-Create the genre and author indexes.
-
-=cut
-
-sub _indexLibrary {
-    _makeGenreIndexes();
-    _makeAuthorIndexes();
-}
-
 =head2 mainInterface
 
 The main Public Library management view.
@@ -230,7 +239,7 @@ sub mainInterface {  # the default interface for managing the Library
     my $template = HTML::Template->new(
         filename => "templates/mmpub/library/mainInterface.tmpl"
     );
-    my $order_by=$cgiobject->param("order_by"); 
+    my $order_by=$cgi->param("order_by"); 
     if ( $order_by eq 'author' ) {
         $order_by = "last_name, first_name";
     }
@@ -294,6 +303,246 @@ sub mainInterface {  # the default interface for managing the Library
     $template->param(AUTHORS => \@authors);
     $template->param(TITLES => \@titles);
     return ($template, $message);
+}
+
+=head2 saveAuthor
+
+Add or update an author record.
+
+=cut
+
+sub saveAuthor {   # grab the values submitted
+    my $email=$cgi->param('email'); 
+    my $alt_emails=$cgi->param('alt_emails'); 
+    my $email_display=$cgi->param('email_display'); 
+    my $homesite=$cgi->param('homesite'); 
+    my $bio=$cgi->param('bio'); 
+    my $first_name=$cgi->param('first_name'); 
+    my $last_name=$cgi->param('last_name'); 
+    my $published=$cgi->param('published'); 
+    my $id=$cgi->param('id'); 
+    $published = $published ? 1 : 0;
+    if ( $id ) {   # update existing author
+        $bio =~ s/\n/<br>/g;
+        # when editing or viewing, query the database about the product
+        my $update="UPDATE authors 
+        SET email = ?, alt_emails = ?, email_display = ?, homesite = ?, bio = ?, first_name = ?, last_name = ?, published = ?
+        WHERE id = ?";
+        my $sth = $MindMined::dbh->prepare($update);
+        $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
+        my $message = qq {$first_name $last_name has been updated.};
+        mainInterface($message);
+    }
+    else {  # add new author
+        my $insert="INSERT INTO authors (email, alt_emails, email_display, homesite, bio, first_name, last_name, published) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published) || die "execute: $insert: $DBI::errstr";
+        # grab the automatically incremented id that was generated
+        $id = $sth->{mysql_insertid} || $sth->{insertid}; 
+        my $message = qq {$first_name $last_name has been added.};
+        mainInterface($message);
+    }
+    batchLibrary();
+}
+
+=head2 saveBody
+
+TODO
+
+=cut
+
+sub saveBody {
+    my $body=$cgi->param('body'); 
+    my $id=$cgi->param('id');
+    my $select="SELECT pagetitle 
+    FROM titles 
+    WHERE id = '$id'";
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
+    my ($pagetitle) = $sth->fetchrow_array();
+    ##
+    my $update="UPDATE titles SET body = ? WHERE id = '$id'";
+    $sth = $MindMined::dbh->prepare($update);
+    $sth->execute($body) || die "sth->execute($update): $DBI::errstr\n";
+    my $message = qq {$pagetitle has been updated.};
+}
+
+=head2 saveTitle
+
+TODO
+
+=cut
+
+sub saveTitle {
+    # grab the values submitted
+    my $published=$cgi->param('published'); 
+    my $pagetitle=$cgi->param('pagetitle'); 
+    my $genre=$cgi->param('genre'); 
+    my $image_URL=$cgi->param('image_URL'); 
+    my $description=$cgi->param('description'); 
+    my $filename=$cgi->param('filename'); 
+    my $year=$cgi->param('year'); 
+    my $author_id=$cgi->param('author_id'); 
+    my $image_alt_text=$cgi->param('image_alt_text'); 
+    my $keywords=$cgi->param('keywords'); 
+    my $body=$cgi->param('body'); 
+    my $id=$cgi->param('id');
+    if ( ! $genre ) {
+        my $message = qq |Please select a genre.|;
+        titleInterface($message);
+        exit;
+    }
+    if ( ! $author_id ) {
+        my $message = qq |Please select an author.|;
+        titleInterface($message);
+        exit;
+    }
+    if ( $published =~ m/^on$/i ) {
+        $published = 'yes';
+    }
+    else {
+        $published = 'no';
+    }
+    my $message;
+    if ( $id ) {  # update existing title
+        my $update="UPDATE titles 
+        SET published = ?, pagetitle = ?, genre = ?, image_URL = ?, description = ?, filename = ?, year = ?, author_id = ?, image_alt_text = ?, keywords = ? 
+        WHERE id = ?";
+        my $sth = $MindMined::dbh->prepare($update);
+        $sth->execute($published, $pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $id) || die "sth->execute($update): $DBI::errstr\n";
+        $message = qq {$pagetitle has been updated.};
+    }
+    else {  # add new title
+        my $content_body;
+        $body =~ m/^.*(\\|\/)(.*)/; # strip the remote path and keep the filename
+        while(<$body>) {
+           $content_body .= $_;
+        }
+        my $insert="INSERT INTO titles (pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
+        $sth->execute($pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $content_body) || die "execute: $insert: $DBI::errstr";
+        # grab the automatically incremented id that was generated
+        $id = $sth->{mysql_insertid} || $sth->{insertid}; 
+        $message = qq {$pagetitle has been added.};
+    }
+    batchLibrary($id);
+    mainInterface($message);
+}
+
+
+=head2 title
+
+Add / manage a title in the Public Library.
+
+=cut
+
+sub title {
+    my $id=$cgi->param('id'); 
+    my $t = HTML::Template->new(
+        filename => "templates/mmpub/library/titleInterface.tmpl"
+    );
+    my $file_upload;
+    my $file_upload_form;
+    my $add_or_update;
+    my $published; my $pagetitle; my $this_genre; my $image_URL; my $description;
+    my $filename; my $year; my $this_author_id; my $image_alt_text; my $keywords;
+    if ($id) {
+        $add_or_update = qq {Update};
+        my $select="SELECT published, pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords 
+        FROM titles 
+        WHERE id = ?";
+        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
+        $sth->execute($id) || die "execute: $select: $DBI::errstr";
+        ($published, $pagetitle, $this_genre, $image_URL, $description, $filename, $year, $this_author_id, $image_alt_text, $keywords) = $sth->fetchrow_array();
+    }
+    else {
+        $add_or_update = 'Add';
+    }
+    my @genres = ('erotic_fiction','fiction','nonfiction','plays','poetry');
+    my @genre_options;
+    foreach my $genre (@genres) {
+        my %row;
+        if ($this_genre eq $genre) {$row{SELECTED} = 'SELECTED';}
+        $row{GENRE} = $genre;
+        push(@genre_options, \%row);
+    }
+    # get list of authors
+    my $select = <<~"SQL";
+    SELECT first_name, last_name, id 
+    FROM authors 
+    ORDER BY last_name, first_name
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute;
+    my @author_options;
+    while (my ($first_name, $last_name, $author_id) = $sth->fetchrow_array()) {
+        my %row;
+        if ($this_author_id eq $author_id) {$row{SELECTED} = 'SELECTED';} 
+        $row{AUTHOR_ID} = $author_id;
+        $row{FIRST_NAME} = $first_name;
+        $row{LAST_NAME} = $last_name;
+        push(@author_options, \%row);
+    }
+    if (! $image_alt_text) {
+        $image_alt_text = qq |image for $pagetitle|;
+    }
+    if ($published eq 'yes') {
+        $t->param(PUBLISHED => 1);
+    }
+    $t->param(ADD_OR_UPDATE => $add_or_update);
+    $t->param(AUTHOR_OPTIONS => \@author_options);
+    $t->param(GENRE_OPTIONS => \@genre_options);
+    $t->param(PAGETITLE => $pagetitle);
+    #$t->param(GENRE => $this_genre);
+    $t->param(IMAGE_URL => $image_URL);
+    $t->param(DESCRIPTION => $description);
+    $t->param(FILENAME => $filename);
+    $t->param(YEAR => $year);
+    $t->param(IMAGE_ALT_TEXT => $image_alt_text);
+    $t->param(KEYWORDS => $keywords);
+    $t->param(ID => $id);
+    return ($t, $message);
+}
+
+=head2 updateBody
+
+TODO
+
+=cut
+
+sub updateBody {
+    my $body=$cgi->param('body'); 
+    my $id=$cgi->param('id');
+    my $content_body;
+    die("You must choose a local file to upload...") if ! $body;
+    $body =~ m/^.*(\\|\/)(.*)/; # strip the remote path and keep the filename
+    while(<$body>) {
+       $content_body .= $_;
+    }
+    # prevents a crash
+    utf8::upgrade($content_body);
+    my $update="UPDATE titles 
+    SET body = ?, body2 = ? 
+    WHERE id = ?";
+    my $sth = $MindMined::dbh->prepare($update);
+    $sth->execute($content_body, $content_body, $id) || die "sth->execute($update): $DBI::errstr\n";
+    my $message = qq |Body of piece has been updated.|;
+    batchLibrary($id);
+    mainInterface($message);
+}
+
+=head1 INTERNAL SOUBROUTINES
+
+=head2 _indexLibrary
+
+Create the genre and author indexes.
+
+=cut
+
+sub _indexLibrary {
+    _makeGenreIndexes();
+    _makeAuthorIndexes();
 }
 
 =head2 _makeAuthorIndexes
@@ -539,230 +788,6 @@ sub _processTemplate {
     print $output;
 }
 
-=head2 saveAuthor
-
-Add or update an author record.
-
-=cut
-
-sub saveAuthor {   # grab the values submitted
-    my $email=$cgiobject->param('email'); 
-    my $alt_emails=$cgiobject->param('alt_emails'); 
-    my $email_display=$cgiobject->param('email_display'); 
-    my $homesite=$cgiobject->param('homesite'); 
-    my $bio=$cgiobject->param('bio'); 
-    my $first_name=$cgiobject->param('first_name'); 
-    my $last_name=$cgiobject->param('last_name'); 
-    my $published=$cgiobject->param('published'); 
-    my $id=$cgiobject->param('id'); 
-    $published = $published ? 1 : 0;
-    if ( $id ) {   # update existing author
-        $bio =~ s/\n/<br>/g;
-        # when editing or viewing, query the database about the product
-        my $update="UPDATE authors 
-        SET email = ?, alt_emails = ?, email_display = ?, homesite = ?, bio = ?, first_name = ?, last_name = ?, published = ?
-        WHERE id = ?";
-        my $sth = $MindMined::dbh->prepare($update);
-        $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published, $id) || die "sth->execute($update): $DBI::errstr\n";
-        my $message = qq {$first_name $last_name has been updated.};
-        mainInterface($message);
-    }
-    else {  # add new author
-        my $insert="INSERT INTO authors (email, alt_emails, email_display, homesite, bio, first_name, last_name, published) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
-        $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published) || die "execute: $insert: $DBI::errstr";
-        # grab the automatically incremented id that was generated
-        $id = $sth->{mysql_insertid} || $sth->{insertid}; 
-        my $message = qq {$first_name $last_name has been added.};
-        mainInterface($message);
-    }
-    batchLibrary();
-}
-
-=head2 saveBody
-
-TODO
-
-=cut
-
-sub saveBody {
-    my $body=$cgiobject->param('body'); 
-    my $id=$cgiobject->param('id');
-    my $select="SELECT pagetitle 
-    FROM titles 
-    WHERE id = '$id'";
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute() || die "sth->execute($select): $DBI::errstr\n";
-    my ($pagetitle) = $sth->fetchrow_array();
-    ##
-    my $update="UPDATE titles SET body = ? WHERE id = '$id'";
-    $sth = $MindMined::dbh->prepare($update);
-    $sth->execute($body) || die "sth->execute($update): $DBI::errstr\n";
-    my $message = qq {$pagetitle has been updated.};
-}
-
-=head2 saveTitle
-
-TODO
-
-=cut
-
-sub saveTitle {
-    # grab the values submitted
-    my $published=$cgiobject->param('published'); 
-    my $pagetitle=$cgiobject->param('pagetitle'); 
-    my $genre=$cgiobject->param('genre'); 
-    my $image_URL=$cgiobject->param('image_URL'); 
-    my $description=$cgiobject->param('description'); 
-    my $filename=$cgiobject->param('filename'); 
-    my $year=$cgiobject->param('year'); 
-    my $author_id=$cgiobject->param('author_id'); 
-    my $image_alt_text=$cgiobject->param('image_alt_text'); 
-    my $keywords=$cgiobject->param('keywords'); 
-    my $body=$cgiobject->param('body'); 
-    my $id=$cgiobject->param('id');
-    if ( ! $genre ) {
-        my $message = qq |Please select a genre.|;
-        titleInterface($message);
-        exit;
-    }
-    if ( ! $author_id ) {
-        my $message = qq |Please select an author.|;
-        titleInterface($message);
-        exit;
-    }
-    if ( $published =~ m/^on$/i ) {
-        $published = 'yes';
-    }
-    else {
-        $published = 'no';
-    }
-    my $message;
-    if ( $id ) {  # update existing title
-        my $update="UPDATE titles 
-        SET published = ?, pagetitle = ?, genre = ?, image_URL = ?, description = ?, filename = ?, year = ?, author_id = ?, image_alt_text = ?, keywords = ? 
-        WHERE id = ?";
-        my $sth = $MindMined::dbh->prepare($update);
-        $sth->execute($published, $pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $id) || die "sth->execute($update): $DBI::errstr\n";
-        $message = qq {$pagetitle has been updated.};
-    }
-    else {  # add new title
-        my $content_body;
-        $body =~ m/^.*(\\|\/)(.*)/; # strip the remote path and keep the filename
-        while(<$body>) {
-           $content_body .= $_;
-        }
-        my $insert="INSERT INTO titles (pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
-        $sth->execute($pagetitle, $genre, $image_URL, $description, $filename, $year, $author_id, $image_alt_text, $keywords, $content_body) || die "execute: $insert: $DBI::errstr";
-        # grab the automatically incremented id that was generated
-        $id = $sth->{mysql_insertid} || $sth->{insertid}; 
-        $message = qq {$pagetitle has been added.};
-    }
-    batchLibrary($id);
-    mainInterface($message);
-}
-
-
-=head2 titleInterface
-
-Add / manage a title in the Public Library.
-
-=cut
-
-sub titleInterface {
-    my $id=$cgiobject->param('id'); 
-    my $t = HTML::Template->new(filename => "templates/mmpub/library/titleInterface.tmpl");
-    my $file_upload;
-    my $file_upload_form;
-    my $add_or_update;
-    my $published; my $pagetitle; my $this_genre; my $image_URL; my $description;
-    my $filename; my $year; my $this_author_id; my $image_alt_text; my $keywords;
-    if ($id) {
-        $add_or_update = qq {Update};
-        my $select="SELECT published, pagetitle, genre, image_URL, description, filename, year, author_id, image_alt_text, keywords 
-        FROM titles 
-        WHERE id = ?";
-        my $sth = $MindMined::dbh->prepare($select) || die "prepare: $select: $DBI::errstr";
-        $sth->execute($id) || die "execute: $select: $DBI::errstr";
-        ($published, $pagetitle, $this_genre, $image_URL, $description, $filename, $year, $this_author_id, $image_alt_text, $keywords) = $sth->fetchrow_array();
-    }
-    else {
-        $add_or_update = 'Add';
-    }
-    my @genres = ('erotic_fiction','fiction','nonfiction','plays','poetry');
-    my @genre_options;
-    foreach my $genre (@genres) {
-        my %row;
-        if ($this_genre eq $genre) {$row{SELECTED} = 'SELECTED';}
-        $row{GENRE} = $genre;
-        push(@genre_options, \%row);
-    }
-    # get list of authors
-    my $select = <<~"SQL";
-    SELECT first_name, last_name, id 
-    FROM authors 
-    ORDER BY last_name, first_name
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute;
-    my @author_options;
-    while (my ($first_name, $last_name, $author_id) = $sth->fetchrow_array()) {
-        my %row;
-        if ($this_author_id eq $author_id) {$row{SELECTED} = 'SELECTED';} 
-        $row{AUTHOR_ID} = $author_id;
-        $row{FIRST_NAME} = $first_name;
-        $row{LAST_NAME} = $last_name;
-        push(@author_options, \%row);
-    }
-    if (! $image_alt_text) {
-        $image_alt_text = qq |image for $pagetitle|;
-    }
-    if ($published eq 'yes') {
-        $t->param(PUBLISHED => 1);
-    }
-    $t->param(ADD_OR_UPDATE => $add_or_update);
-    $t->param(AUTHOR_OPTIONS => \@author_options);
-    $t->param(GENRE_OPTIONS => \@genre_options);
-    $t->param(PAGETITLE => $pagetitle);
-    #$t->param(GENRE => $this_genre);
-    $t->param(IMAGE_URL => $image_URL);
-    $t->param(DESCRIPTION => $description);
-    $t->param(FILENAME => $filename);
-    $t->param(YEAR => $year);
-    $t->param(IMAGE_ALT_TEXT => $image_alt_text);
-    $t->param(KEYWORDS => $keywords);
-    $t->param(ID => $id);
-    return ($t, $message);
-}
-
-=head2 updateBody
-
-TODO
-
-=cut
-
-sub updateBody {
-    my $body=$cgiobject->param('body'); 
-    my $id=$cgiobject->param('id');
-    my $content_body;
-    die("You must choose a local file to upload...") if ! $body;
-    $body =~ m/^.*(\\|\/)(.*)/; # strip the remote path and keep the filename
-    while(<$body>) {
-       $content_body .= $_;
-    }
-    # prevents a crash
-    utf8::upgrade($content_body);
-    my $update="UPDATE titles 
-    SET body = ?, body2 = ? 
-    WHERE id = ?";
-    my $sth = $MindMined::dbh->prepare($update);
-    $sth->execute($content_body, $content_body, $id) || die "sth->execute($update): $DBI::errstr\n";
-    my $message = qq |Body of piece has been updated.|;
-    batchLibrary($id);
-    mainInterface($message);
-}
 
 =head1 AUTHORS
 

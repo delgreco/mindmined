@@ -35,9 +35,8 @@ my %dispatch = (
 
 my ($template, $message);
 if ( my $code = $dispatch{$action} ) {
-    $code->();
     # run the sub by the same name as $action
-    ($template, $message) = &{\&{$action}}();
+    ($template, $message) = $code->();
     _processTemplate($template, $message);
 }
 else {
