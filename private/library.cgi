@@ -459,7 +459,7 @@ sub title {
     else {
         $add_or_update = 'Add';
     }
-    my @genres = ('erotic_fiction','fiction','nonfiction','plays','poetry');
+    my @genres = ('fiction','nonfiction','plays','poetry');
     my @genre_options;
     foreach my $genre (@genres) {
         my %row;
@@ -667,7 +667,6 @@ sub _makeGenreIndexes {
         'nonfiction',
         'poetry',
         'plays',
-        'erotic_fiction',
     );
     my @index_types = (
         'by length',
@@ -687,9 +686,6 @@ sub _makeGenreIndexes {
         $sth->execute;
         my ($genre_total) = $sth->fetchrow_array();
         my $genre_printable = ucfirst($genre);
-        if ( $genre_printable eq 'erotic_fiction' ) {
-            $genre_printable =~ s/_/ /;
-        }
         # get title list
         foreach my $type ( @index_types ) {
             my $genre_index_template = HTML::Template->new(filename => "templates/library/genre_index.tmpl");

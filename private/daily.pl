@@ -131,7 +131,7 @@ sub makeOtherPages {
 
 =head2 recArtistOfTheDay()
 
-Prepare a fresh "Recording Artist of the Day" html file for inclusion in the Recording Artists index, randomnly selecting a recording artist from all but the most recently added.
+Prepare a fresh "Recording Artist of the Day" html file for inclusion in the Recording Artists index.
 
 =cut
 
@@ -139,12 +139,6 @@ sub recArtistOfTheDay {
     my $select = <<~"SQL";
     SELECT name, dir, image_url
     FROM rec_artists
-    WHERE added IS NULL
-    OR
-    added < (
-        SELECT MAX(added)
-        FROM rec_artists
-    )
     ORDER BY RAND()
     SQL
     my $sth = $MindMined::dbh->prepare($select);
@@ -209,9 +203,21 @@ index.
 sub trackOfTheDay { 
     my @random = ('1', '2');
     my $select = <<~"SQL";
-    SELECT title, url, length, mediatype, bitrate, release_id
-    FROM tracks 
-    WHERE published = 1
+    SELECT title, url, `length`, mediatype, bitrate, release_id
+    FROM tracks AS t
+    LEFT JOIN releases AS rel
+    ON t.release_id = rel.id
+    LEFT JOIN rec_artists AS ra
+    ON rel.rec_artist = ra.id
+    WHERE t.published = 1
+    AND (
+        ra.added IS NULL
+        OR
+        ra.added < (
+            SELECT MAX(added)
+            FROM rec_artists
+        )
+    )
     ORDER BY RAND()
     SQL
     my $sth = $MindMined::dbh->prepare($select);
@@ -225,10 +231,10 @@ sub trackOfTheDay {
         my $select = <<~"SQL";
         SELECT `release`, rec_artist, image_url, filename, year 
         FROM releases 
-        WHERE id = '$release_id'
+        WHERE id = ?
         SQL
         my $sth = $MindMined::dbh->prepare($select);
-        $sth->execute;
+        $sth->execute($release_id);
         ($release, $rec_artist_id, $image_url, $filename, $year) = $sth->fetchrow_array();
         # select a Cozmik track of the day a little less often
         if ( ($random[$rand] eq "1") && ($rec_artist_id == 1) ) {  
@@ -272,11 +278,20 @@ Prepare a fresh "Title of the Day" html file for inclusion in other pages.
 sub titleOfTheDay {
     # select a random title of the day
     my $select = <<~"SQL";
-    SELECT pagetitle, genre, image_URL, description, filename, author_id, id, 
-    image_alt_text, keywords 
-    FROM titles 
-    WHERE genre <> 'erotic_fiction' 
-    AND published = 'yes'
+    SELECT pagetitle, genre, t.image_URL, description, filename, author_id, 
+    t.id, image_alt_text, keywords 
+    FROM titles AS t
+    LEFT JOIN authors AS a
+    ON t.author_id = a.id
+    WHERE t.published = 'yes'
+    AND (
+        a.added IS NULL
+        OR
+        a.added < (
+            SELECT MAX(added)
+            FROM authors
+        )
+    )
     ORDER BY RAND()
     SQL
     my $sth = $MindMined::dbh->prepare($select);
@@ -294,18 +309,18 @@ sub titleOfTheDay {
     my ($last_name, $first_name) = $sth->fetchrow_array();
 
     # title of the day standalone file 
-    my $template = HTML::Template->new(
+    my $t = HTML::Template->new(
         filename => "$MindMined::template_path/daily_features/daily_title.tmpl"
     ) || die "oops $!";
-    $template->param(TITLE => $pagetitle);
-    $template->param(TITLE_URL => "/public_library/$genre/$filename");
-    $template->param(AUTHOR => "$first_name $last_name");
-    $template->param(TITLE_DESCRIPTION => $description);
-    $template->param(TITLE_ALT => $image_alt_text);
-    $template->param(TITLE_IMAGE_URL => $image_URL);
+    $t->param(TITLE => $pagetitle);
+    $t->param(TITLE_URL => "/public_library/$genre/$filename");
+    $t->param(AUTHOR => "$first_name $last_name");
+    $t->param(TITLE_DESCRIPTION => $description);
+    $t->param(TITLE_ALT => $image_alt_text);
+    $t->param(TITLE_IMAGE_URL => $image_URL);
     my $file = "$MindMined::template_path/daily_features/today_title.html";
     open(TODAY, "> $file") || die "$file, $!";
-    my $output = $template->output;
+    my $output = $t->output;
     print TODAY "$output";
     close(TODAY);
 }
