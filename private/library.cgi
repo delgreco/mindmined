@@ -334,8 +334,9 @@ sub saveAuthor {   # grab the values submitted
         mainInterface($message);
     }
     else {  # add new author
-        my $insert="INSERT INTO authors (email, alt_emails, email_display, homesite, bio, first_name, last_name, published) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        my $insert="INSERT INTO authors (added, email, alt_emails, 
+        email_display, homesite, bio, first_name, last_name, published) 
+        VALUES (CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?)";
         my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($email, $alt_emails, $email_display, $homesite, $bio, $first_name, $last_name, $published) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated

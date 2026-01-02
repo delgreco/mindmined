@@ -391,7 +391,9 @@ sub saveArtist {
         $message = qq {$first_name $last_name updated.};
     }
     else {
-        my $insert="INSERT INTO artists (first_name, last_name, email, homesite, dir, bio) VALUES (?, ?, ?, ?, ?, ?)";
+        my $insert="INSERT INTO artists 
+        (added, first_name, last_name, email, homesite, dir, bio) 
+        VALUES (CURDATE(), ?, ?, ?, ?, ?, ?)";
         my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
         $sth->execute($first_name, $last_name, $email, $homesite, $dir, $bio) || die "execute: $insert: $DBI::errstr";
         # grab the automatically incremented id that was generated

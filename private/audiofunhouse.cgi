@@ -553,8 +553,8 @@ sub saveRecArtist {
 	}
 	else {
 		my $insert="INSERT INTO rec_artists 
-        (name, dir, email, email_display, homesite, profile, image_url, published) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        (added, name, dir, email, email_display, homesite, profile, image_url, published) 
+        VALUES (CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?)";
 		my $sth = $MindMined::dbh->prepare($insert) || die "prepare: $insert: $DBI::errstr";
 		$sth->execute($rec_artist, $dir, $email, $email_display, $homesite, $profile, $image_url, $published) || die "execute: $insert: $DBI::errstr";
 		# grab the automatically incremented id that was generated
