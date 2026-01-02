@@ -13,7 +13,6 @@ use lib qw (
 use MindMined;
 
 my $cgi = new CGI;
-my $action=$cgi->param("action");
 
 if ( @ARGV && $ARGV[0] eq "--refresh" ) {
     # when called this way, we need to manually define doc root

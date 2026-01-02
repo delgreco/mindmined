@@ -25,21 +25,29 @@ else {
 
 =head2 artistOfTheDay()
 
-Create C<today_artist.tmpl>, the Image/Artist of the Day.
+Create C<today_artist.tmpl>, the Image/Artist of the Day, selected randomly from all artists except the most recently added artist, who would be featured prominently already.
 
 =cut
 
 sub artistOfTheDay {
     # get today's random image from the gallery
     my $select = <<~"SQL";
-    SELECT id, title, url, artist_id 
-    FROM gallery 
+    SELECT g.id, g.title, g.url, g.artist_id 
+    FROM gallery AS g
+    LEFT JOIN artists AS a
+    ON g.artist_id = a.id
+    WHERE a.added IS NULL
+    OR
+    a.added < (
+        SELECT MAX(added)
+        FROM artists
+    )
     ORDER BY RAND()
     SQL
     my $sth = $MindMined::dbh->prepare($select);
     $sth->execute;
     my ($id, $image_title, $image_URL, $artist_id) = $sth->fetchrow_array();
-  
+    
     # get today's artist for that image
     $select = <<~"SQL";
     SELECT first_name, last_name, dir 
@@ -123,8 +131,7 @@ sub makeOtherPages {
 
 =head2 recArtistOfTheDay()
 
-Prepare a fresh "Recording Artist of the Day" html file for inclusion in the 
-Recording Artists index.
+Prepare a fresh "Recording Artist of the Day" html file for inclusion in the Recording Artists index, randomnly selecting a recording artist from all but the most recently added.
 
 =cut
 
@@ -132,6 +139,12 @@ sub recArtistOfTheDay {
     my $select = <<~"SQL";
     SELECT name, dir, image_url
     FROM rec_artists
+    WHERE added IS NULL
+    OR
+    added < (
+        SELECT MAX(added)
+        FROM rec_artists
+    )
     ORDER BY RAND()
     SQL
     my $sth = $MindMined::dbh->prepare($select);
