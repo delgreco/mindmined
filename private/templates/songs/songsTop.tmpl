@@ -46,10 +46,10 @@
     <img src="/images/light_bulb.gif" hspace="4" align="absmiddle">
     <strong>NEW IDEAS</strong><br><br>
     <TMPL_UNLESS SONG_INTERFACE>
-        <a href="/cgi-bin/private/songs.cgi?action=songInterface"><img height="20" width="20" src="/images/plus_transparent.gif" hspace="3" border="0" align="absmiddle"> Add Song</a><br><br>
+        <a href="/cgi-bin/private/songs.cgi?action=song"><img height="20" width="20" src="/images/plus_transparent.gif" hspace="3" border="0" align="absmiddle"> Add Song</a><br><br>
     </TMPL_UNLESS>
     <TMPL_UNLESS SONGBOOK_INTERFACE>
-        <a href="/cgi-bin/private/songs.cgi?action=songbookInterface"><img height="20" width="20" src="/images/plus_transparent.gif" hspace="3" border="0" align="absmiddle"> Add SongBook</a>
+        <a href="/cgi-bin/private/songs.cgi?action=songBookInterface"><img height="20" width="20" src="/images/plus_transparent.gif" hspace="3" border="0" align="absmiddle"> Add SongBook</a>
     </TMPL_UNLESS>
     </td>
     <td width="25%" align="center" bgcolor="#BBBBBB" nowrap>
@@ -72,7 +72,7 @@
         </tr>
     </table>
     <input type="submit" value="Generate New Setlist">
-    <input type="hidden" name="action" value="setlistInterface">
+    <input type="hidden" name="action" value="setlist">
     </form>
     </td>
     </tr>

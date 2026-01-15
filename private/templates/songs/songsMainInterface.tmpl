@@ -54,20 +54,20 @@ function validateAdd() {
         </th>
         </tr>
     
-        <TMPL_LOOP NAME=SONGS>
-            <tr onMouseOver="this.bgColor='#FFFFCC';" onMouseOut="this.bgColor='<TMPL_VAR NAME=BGCOLOR>';" bgcolor="<TMPL_VAR NAME=BGCOLOR>">
-            <td align="center"><TMPL_IF NAME=AUDIO_URL><a href="<TMPL_VAR NAME=AUDIO_URL>"><img src="/images/icon_sound.gif" border="0"></TMPL_IF></td>
-            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" ><TMPL_VAR NAME=TITLE></td>
-            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" ><TMPL_VAR NAME=CREDITS></td>
-            <td onClick="javascript:document.location='<TMPL_IF NAME=CHORDSHEET><TMPL_VAR NAME=SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID><TMPL_ELSE><TMPL_VAR NAME=URL></TMPL_IF>';" align="center"><a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=songInterface&id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>"><img src="/images/pencil.gif" border="0"></a></td>
+        <TMPL_LOOP SONGS>
+            <tr onMouseOver="this.bgColor='#FFFFCC';" onMouseOut="this.bgColor='<TMPL_VAR BGCOLOR>';" bgcolor="<TMPL_VAR BGCOLOR>">
+            <td align="center"><TMPL_IF AUDIO_URL><a href="<TMPL_VAR AUDIO_URL>"><img src="/images/icon_sound.gif" border="0"></TMPL_IF></td>
+            <td onClick="javascript:document.location='<TMPL_IF CHORDSHEET><TMPL_VAR SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID><TMPL_ELSE><TMPL_VAR URL></TMPL_IF>';" ><TMPL_VAR TITLE></td>
+            <td onClick="javascript:document.location='<TMPL_IF CHORDSHEET><TMPL_VAR SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID><TMPL_ELSE><TMPL_VAR URL></TMPL_IF>';" ><TMPL_VAR CREDITS></td>
+            <td onClick="javascript:document.location='<TMPL_IF CHORDSHEET><TMPL_VAR SCRIPT_NAME>?action=viewSong&id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID><TMPL_ELSE><TMPL_VAR URL></TMPL_IF>';" align="center"><a href="<TMPL_VAR SCRIPT_NAME>?action=song&id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID>"><img src="/images/pencil.gif" border="0"></a></td>
             <td align="center">
-            <TMPL_IF NAME=SONGBOOK_ID>
-                <a href="<TMPL_VAR NAME=SCRIPT_NAME>?action=removeFromSongBook&song_id=<TMPL_VAR NAME=ID>&songbook_id=<TMPL_VAR NAME=SONGBOOK_ID>" onClick="return window.confirm('Remove this song from the songbook called <TMPL_VAR NAME=SONGBOOK>?')"><img src="/images/delete.gif" border="0"></a>
+            <TMPL_IF SONGBOOK_ID>
+                <a href="<TMPL_VAR SCRIPT_NAME>?action=removeFromSongBook&song_id=<TMPL_VAR ID>&songbook_id=<TMPL_VAR SONGBOOK_ID>" onClick="return window.confirm('Remove this song from the songbook called <TMPL_VAR ESCAPE=JS SONGBOOK>?')"><img src="/images/delete.gif" border="0"></a>
             <TMPL_ELSE>
-                <a href="/cgi-bin/private/songs.cgi?action=deleteSong&id=<TMPL_VAR NAME=ID>" onClick="return window.confirm('Delete this song?')"><img src="/images/delete.gif" border="0"></a>
+                <a href="/cgi-bin/private/songs.cgi?action=deleteSong&id=<TMPL_VAR ID>" onClick="return window.confirm('Delete this song?')"><img src="/images/delete.gif" border="0"></a>
             </TMPL_IF>
             </td>
-            <!-- <TMPL_VAR NAME=MORE_INFO_URL> -->
+            <!-- <TMPL_VAR MORE_INFO_URL> -->
             </tr>
         </TMPL_LOOP>
     
