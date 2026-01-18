@@ -42,10 +42,21 @@ my $dbh = DBI->connect(
 mainInterface();
 exit;
 
+=head2 mainInterface
+
+TODO
+
+=cut
+
 sub mainInterface {
-	my $t = HTML::Template->new(filename => 'templates/books/mainInterface.tmpl');
+	my $t = HTML::Template->new(
+        filename => 'templates/books/mainInterface.tmpl',
+        utf8     => 1, 
+    );
 	my $select = <<~"SQL";
-    SELECT author, title, year, notes, genre, id FROM books ORDER BY author, year
+    SELECT author, title, year, notes, genre, id 
+    FROM books 
+    ORDER BY author, title
     SQL
 	my $sth = $dbh->prepare($select);
 	$sth->execute;
