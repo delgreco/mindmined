@@ -223,6 +223,7 @@ Add or edit a newsbit.
 =cut
 
 sub newsbitInterface {
+    my $message = qq {<font color="red">$_[0]</font>};
     my $id=$cgi->param('id'); 
     my $t = HTML::Template->new(filename => 'templates/mmpub/news/newsbitInterface.tmpl');
     my $select = <<~"SQL";
@@ -473,7 +474,7 @@ sub refreshNews {
     }
     else {
         my $message = qq |News has been refreshed at news/, library/, audio/, and gallery/.  RSS Feed also refreshed.|;
-        mainInterface($message);
+        newsbitInterface($message);
     }
 }
 
