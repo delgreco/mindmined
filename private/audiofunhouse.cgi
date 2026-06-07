@@ -47,7 +47,7 @@ exit;
 
 =head2 batchFunhouse()
 
-TODO
+Generate all pages for the Audio Funhouse, and return to the main Audio Funhouse publisher page.
 
 =cut
 
@@ -61,12 +61,14 @@ sub batchFunhouse {
 
 =head2 batchRecArtistPages()
 
-TODO
+Generate all recording artist pages.
 
 =cut
 
 sub batchRecArtistPages {
-    my $rec_artists_template = HTML::Template->new(filename => 'templates/audio/rec_artists.tmpl');
+    my $rec_artists_template = HTML::Template->new(
+        filename => 'templates/audio/rec_artists.tmpl'
+    );
     my $new_dirs;
     my $count = 0;
     my $select = <<~"SQL";
@@ -152,7 +154,7 @@ sub batchRecArtistPages {
 
 =head2 batchReleasePages()
 
-TODO
+Generate all audio release pages.
 
 =cut
 

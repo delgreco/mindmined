@@ -2,7 +2,7 @@
 .htaccess
 *fodder
 *.swp
-cpanfile.snapshot
+cpanfile.snapshot*
 private/templates/daily_features/*.html
 local*
 lib

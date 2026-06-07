@@ -2,6 +2,8 @@
 
 # use strict, warnings and modern features
 use 5.030;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 use lib qw (
     ../lib
@@ -384,30 +386,7 @@ Refresh the Audio Funhouse homepage with the latest audio newsbits.
 
 sub refreshAudioIndex {
     my $t = HTML::Template->new(filename => 'templates/audio/index.tmpl');
-    my $counter = 0;
-    my $select = <<~"SQL";
-    SELECT newsbit, newsbit_URL, newsbit_image_URL, category, `datetime`, newsletter_status 
-    FROM news 
-    WHERE category = 'audiofunhouse' 
-    AND published = 1
-    ORDER BY datetime DESC
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute();
-    my @newsbits;
-    while (my ($newsbit, $newsbit_url, $newsbit_image_url, $category, $datetime, $newsletter_status) = $sth->fetchrow_array()) {
-        $counter++;
-        if ($counter > 3) {last;}
-        my %row;
-        $row{NEWSBIT} = $newsbit;
-        $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
-        $row{NEWSBIT_URL} = $newsbit_url;
-        my $month = substr($datetime, 5, 2);
-        my $day = substr($datetime, 8, 2);
-        my $year = substr($datetime, 0, 4);
-        $row{NEWSBIT_DATETIME} = "${month}.${day}.${year}";
-        push(@newsbits, \%row);
-    }
+    my @newsbits = _getNewsbits(3, 'audiofunhouse');
     $t->param(NEWSBITS => \@newsbits);
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
@@ -425,30 +404,7 @@ Refresh the gallery index page to assure inclusion of latest gallery news items.
 sub refreshGalleryIndex {
     my $t = HTML::Template->new(filename => 'templates/gallery/index.tmpl');
     # reset counter
-    my $counter = 0; my @newsbits;
-    # loop through and replace custom tags with values fetched from database
-    my $select = <<~"SQL";
-    SELECT newsbit, newsbit_URL, newsbit_image_URL, datetime 
-    FROM news 
-    WHERE category = 'gallery' 
-    AND published = 1
-    ORDER BY datetime DESC
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute();
-    while (my ($newsbit, $newsbit_url, $newsbit_image_url, $datetime) = $sth->fetchrow_array()) {
-        my %row;
-        $counter++;
-        if ($counter > 3) {last;}
-        my $month = substr($datetime, 5, 2);
-        my $day = substr($datetime, 8, 2);
-        my $year = substr($datetime, 0, 4);
-        $row{NEWSBIT_URL} = $newsbit_url;
-        $row{NEWSBIT_IMAGE_URL} = "$newsbit_image_url";
-        $row{NEWSBIT_DATETIME} = "${month}.${day}.${year}";
-        $row{NEWSBIT} = $newsbit;
-        push(@newsbits, \%row);
-    }
+    my @newsbits = _getNewsbits(3, 'gallery');
     $t->param(NEWSBITS => \@newsbits);
     my $output = $t->output;
     open(GALLERY_INDEX, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/gallery/index.html") or die $!;
@@ -464,42 +420,7 @@ Keep home page piping hot with news.
 
 sub refreshIndex {
     my $t = HTML::Template->new(filename => 'templates/index.tmpl');
-    my $select = <<~"SQL";
-    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(datetime), image_caption
-    FROM news
-    JOIN news_categories
-    ON news_categories.name = news.category
-    WHERE published = 1
-    ORDER BY datetime DESC
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute();
-    my $counter = 0; my @newsbits;
-    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month, $image_caption) = $sth->fetchrow_array()) {
-        my %row;
-        $counter++;
-        if ($counter > 8) {last;}
-        my $monthnum = substr($datetime, 5, 2);
-        my $day = substr($datetime, 8, 2);
-        my $year = substr($datetime, 0, 4);
-        if ( ! $title ) {
-            $title = substr($newsbit, 0, 45) . '...';
-        }
-
-        my $datetime = "${month} ${day}, ${year}";
-        $row{NEWSBIT_URL} = $newsbit_url;
-        $row{FILENAME} = _getNewsbitFilename($title, $datetime);
-        $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
-        if ( $newsbit_url !~ m/mindmined\.com/ ) {
-            $row{OFFSITE} = 1;
-        }
-        $row{IMAGE_CAPTION} = $image_caption;
-        $row{NEWSBIT_DATETIME} = $datetime;
-        # give me a break
-        $newsbit =~ s/\n/<br>/g;
-        $row{NEWSBIT} = $newsbit;
-        push(@newsbits, \%row);
-    }
+    my @newsbits = _getNewsbits(8);
     $t->param(NEWSBITS => \@newsbits);
     $t->param(PAGETITLE => 'Mind Mined Productions');
     $t->param(SHOW_EDITOR_LINK => 1);
@@ -520,31 +441,7 @@ Refresh the Public Library homepage with the latest library news items.
 
 sub refreshLibraryIndex {
     my $t = HTML::Template->new(filename => 'templates/library/index.tmpl');
-    my $counter = 0; my @newsbits;
-    # loop through and replace custom tags with values fetched from database
-    my $select = <<~"SQL";
-    SELECT newsbit, newsbit_URL, newsbit_image_URL, datetime 
-    FROM news 
-    WHERE category = 'library' 
-    AND published = 1
-    ORDER BY datetime DESC
-    SQL
-    my $sth = $MindMined::dbh->prepare($select);
-    $sth->execute();
-    while (my ($newsbit, $newsbit_url, $newsbit_image_url, $datetime) = $sth->fetchrow_array()) {
-        my %row;
-        $counter++;
-        if ($counter > 3) {last;}
-        my $month = substr($datetime, 5, 2);
-        my $day = substr($datetime, 8, 2);
-        my $year = substr($datetime, 0, 4);
-        $row{NEWSBIT_URL} =  $newsbit_url;
-        $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
-        $row{NEWSBIT_DATETIME} = "${month}.${day}.${year}";
-        $newsbit =~ s/\n/<br>/g;
-        $row{NEWSBIT} = $newsbit;
-        push(@newsbits, \%row)
-    }
+    my @newsbits = _getNewsbits(3, 'library');
     $t->param(NEWSBITS => \@newsbits);
     $t->param(SHOW_EDITOR_LINK => 1);
     my $output = $t->output;
@@ -785,4 +682,57 @@ sub _getNewsbitFilename {
     return "${filename}.html";
 }
 
+=head2 _getNewsbits()
+
+Return an array of hashrefs with data for newsbits.
+
+Optionally, pass a C<category> for only newsbits pertaining to one category.
+
+=cut
+
+sub _getNewsbits( $limit, $category = undef ) {
+    my $and = ''; my @bind_vars;
+    if ( $category ) {
+        $and = "AND category = ?";
+        push(@bind_vars, $category);
+    }
+    my @newsbits;
+    my $select = <<~"SQL";
+    SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, category, news_categories.url, news_categories.icon_image_url, datetime, MONTHNAME(datetime), image_caption
+    FROM news
+    JOIN news_categories
+    ON news_categories.name = news.category
+    WHERE published = 1
+    $and
+    ORDER BY datetime DESC
+    LIMIT $limit
+    SQL
+    my $sth = $MindMined::dbh->prepare($select);
+    $sth->execute(@bind_vars);
+    my @newsbits;
+    while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month, $image_caption) = $sth->fetchrow_array()) {
+        my %row;
+        my $monthnum = substr($datetime, 5, 2);
+        my $day = substr($datetime, 8, 2);
+        my $year = substr($datetime, 0, 4);
+        if ( ! $title ) {
+            $title = substr($newsbit, 0, 45) . '...';
+        }
+
+        my $datetime = "${month} ${day}, ${year}";
+        $row{NEWSBIT_URL} = $newsbit_url;
+        $row{FILENAME} = _getNewsbitFilename($title, $datetime);
+        $row{NEWSBIT_IMAGE_URL} = $newsbit_image_url;
+        if ( $newsbit_url !~ m/mindmined\.com/ ) {
+            $row{OFFSITE} = 1;
+        }
+        $row{IMAGE_CAPTION} = $image_caption;
+        $row{NEWSBIT_DATETIME} = $datetime;
+        # give me a break
+        $newsbit =~ s/\n/<br>/g;
+        $row{NEWSBIT} = $newsbit;
+        push(@newsbits, \%row);
+    }
+    return @newsbits;
+}
 

@@ -1,33 +1,14 @@
 <TMPL_INCLUDE NAME="../standard_head.tmpl"></head><body>
 <TMPL_INCLUDE NAME="../standard_top.tmpl">
 
-
-<!--
-<TITLE>The Mind Mined Public Library</TITLE>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-<META NAME="keywords" CONTENT="<keywords>">
-<META NAME="description" CONTENT="Publishing plays, fiction, nonfiction, and poetry! Full texts available FREE from Mind Mined...  Uncensored, unedited.  Courtesy of our independent authors....">
-<META NAME="robots" CONTENT="index,follow">
-<META NAME="revisit" CONTENT="15 days">
-window.onload=new Function('window.status="The Mind Mined Public Library"')
--->
-
-
-
 <div class="IX_content">
 
     <div style="float: left; width: 60%;">
 
         <TMPL_LOOP NEWSBITS>
-            <span style="width: 100%; padding-left: 20px;"><TMPL_VAR NEWSBIT_DATETIME></span>
-            <article>
-                <p class="dropcap">
-                <TMPL_VAR NEWSBIT>
-                </p>
-                <TMPL_IF NEWSBIT_IMAGE_URL><TMPL_IF NEWSBIT_URL><a href="<TMPL_VAR NEWSBIT_URL>"></TMPL_IF><img style="max-width: 100%;" src="<TMPL_VAR NEWSBIT_IMAGE_URL>"><TMPL_IF NEWSBIT_URL></a></TMPL_IF></TMPL_IF>
-                <br><br><br>
-                <div style="text-align: center;"><img src="/images/2004_logo.jpg"></div>
-            </article>
+            <span style="width: 100%; padding-left: 20px;"><a href="/news/archive/<TMPL_VAR FILENAME>"><TMPL_VAR NEWSBIT_DATETIME></a></span>
+            <TMPL_INCLUDE NAME="templates/news/article_include.tmpl">
+            <br><br>
         </TMPL_LOOP>
 
     </div>
