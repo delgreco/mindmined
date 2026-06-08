@@ -236,14 +236,23 @@ sub newsbitInterface {
     my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $newsbit_category, $datetime, $published, $image_caption) = $sth->fetchrow_array();
     $t->param(SCRIPT_NAME => $ENV{SCRIPT_NAME});
     $t->param(DATETIME => $datetime);
+    $t->param(NEWSBIT_RAW => $newsbit);
+    # give me a break
+    $newsbit =~ s/\n/<br>/g;
     $t->param(NEWSBIT => $newsbit);
-    $t->param(TITLE => $title);
     $t->param(PUBLISHED => $published);
     $t->param(NEWSBIT_URL => $newsbit_url);
     $t->param(NEWSBIT_IMAGE_URL => $newsbit_image_url);
     $t->param(IMAGE_CAPTION => $image_caption);
+    if ( ! $title ) {
+        $title = substr($newsbit, 0, 45) . '...';
+    }
+    $t->param(TITLE => $title);
     $t->param(FILENAME => _getNewsbitFilename($title, $datetime));
     $t->param(ID => $id);
+    if ( $newsbit_url !~ m/mindmined\.com/ ) {
+        $t->param(OFFSITE => 1);
+    }
     my @categories;
     $select = <<~"SQL";
     SELECT name 
@@ -261,6 +270,7 @@ sub newsbitInterface {
         push(@categories, \%row);
     }
     $t->param(CATEGORIES => \@categories);
+    $t->param(MESSAGE => $message);
     my $output = $t->output;
     print "Content-type:text/html\n\n";
     print $output;
@@ -472,10 +482,7 @@ sub refreshNews {
     if ( $command_line_call ) {
         print LOG "$datetime, news.cgi: mindmined.com index page, news page, archive indexes and RSS feed have been refreshed.\n";
     }
-    else {
-        my $message = qq |News has been refreshed at news/, library/, audio/, and gallery/.  RSS Feed also refreshed.|;
-        newsbitInterface($message);
-    }
+    return("News has been refreshed at news/, library/, audio/, and gallery/.  RSS Feed also refreshed.");
 }
 
 =head2 refreshNewsIndex
@@ -628,7 +635,8 @@ sub saveNewsbit {
         $id = $MindMined::dbh->{mysql_insertid} || $MindMined::dbh->{insertid};
         $message = qq |Newsbit has been added linking to <a href="$newsbit_URL">$newsbit_URL</a>.  News pages have been refreshed.|;
     }
-    refreshNews();
+    my $message = refreshNews();
+    newsbitInterface($message);
 }
 
 =head2 saveNewsletter()
@@ -713,13 +721,11 @@ sub _getNewsbits( $limit, $category = undef ) {
     my @newsbits;
     while (my ($newsbit, $title, $newsbit_url, $newsbit_image_url, $category, $category_url, $category_icon_url, $datetime, $month, $image_caption) = $sth->fetchrow_array()) {
         my %row;
-        my $monthnum = substr($datetime, 5, 2);
         my $day = substr($datetime, 8, 2);
         my $year = substr($datetime, 0, 4);
         if ( ! $title ) {
             $title = substr($newsbit, 0, 45) . '...';
         }
-
         my $datetime = "${month} ${day}, ${year}";
         $row{NEWSBIT_URL} = $newsbit_url;
         $row{FILENAME} = _getNewsbitFilename($title, $datetime);

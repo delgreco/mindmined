@@ -7,7 +7,7 @@
     </TMPL_IF>
     <TMPL_IF NEWSBIT_URL>
         <br><br>
-        <a href="<TMPL_VAR NEWSBIT_URL>">Touch here to dig this...</a>
+        <a <TMPL_IF OFFSITE>target="_blank"</TMPL_IF> href="<TMPL_VAR NEWSBIT_URL>">Touch here to dig this...</a>
         <br>
     </TMPL_IF>
     <br><br>

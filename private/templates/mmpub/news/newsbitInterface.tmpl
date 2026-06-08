@@ -13,6 +13,8 @@ function toggleURLField(fileInput) {
 
 <body>
 
+<font color="red"><TMPL_VAR MESSAGE></font><br>
+
 <div style="float: left;">
     <h2>Edit Newsbit <TMPL_IF DATETIME><a href="/news/archive/<TMPL_VAR FILENAME>" target="_blank">posted <TMPL_VAR DATETIME></a></TMPL_IF></h2>
 </div>
@@ -51,7 +53,7 @@ function toggleURLField(fileInput) {
     <input style="width: 95%;" maxlength="255" type="text" id="image_caption" name="image_caption" value="<TMPL_VAR IMAGE_CAPTION>" size="100"><br><br>
 
     Newsbit:<br>
-    <textarea name="newsbit" style="width: 95%; height: 450px;" required><TMPL_VAR NEWSBIT></textarea><br><br>
+    <textarea name="newsbit" style="width: 95%; height: 450px;" required><TMPL_VAR NEWSBIT_RAW></textarea><br><br>
     <input type="hidden" name="id" value="<TMPL_VAR ID>">
     <input type="hidden" name="action" value="saveNewsbit">
     <input type="submit" value="<TMPL_IF ID>Update<TMPL_ELSE>Add</TMPL_IF> Newsbit">
