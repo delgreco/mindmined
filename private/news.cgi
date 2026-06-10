@@ -601,6 +601,21 @@ sub saveNewsbit {
         $newsbit_image_URL = "https://mindmined.com/news_images/$final_filename";
     }
     if ( $id ) {  # update existing item
+        # determine if we are moving from draft (not already published) 
+        # to published, and if so, mark the published datetime
+        my $select = <<~"SQL";
+        SELECT published FROM news
+        WHERE id = ?
+        SQL
+        my $sth = $MindMined::dbh->prepare($select);
+        $sth->execute($id);
+        my ($already_published) = $sth->fetchrow_array();
+        $select = <<~"SQL";
+        SELECT NOW()
+        SQL
+        $sth = $MindMined::dbh->prepare($select);
+        $sth->execute();
+        my ($datetime) = $sth->fetchrow_array();
         my $sql = <<~"SQL";
         UPDATE news 
         SET newsbit_title = ?, newsbit = ?, newsbit_URL = ?, newsbit_image_URL = ?, category = ?, published = ?, image_caption = ?
@@ -610,24 +625,30 @@ sub saveNewsbit {
         if ( $rows_updated != 1 ) {
             print STDERR "ERROR: $rows_updated rows updated.\n";
         }
+        else {
+            if ( ! $already_published && $published ) {
+                my $sql = <<~"SQL";
+                UPDATE news SET `datetime` = NOW() 
+                WHERE id = ?
+                SQL
+                my $rows_updated = $MindMined::dbh->do(qq{$sql}, undef, $id);
+                if ( $rows_updated != 1 ) {
+                    print STDERR "ERROR: $rows_updated rows updated.\n";
+                }
+            }
+        }
         $message = qq |Newsbit has been updated.  News pages have been refreshed.|;
     }
     else {   # new item
-        my $select = <<~"SQL";
-        SELECT NOW()
-        SQL
-        my $sth = $MindMined::dbh->prepare($select);
-        $sth->execute();
-        my ($datetime) = $sth->fetchrow_array();
         # set newsletter status to 'pending'
         my $newsletter_status = 'pending';
         my $sql = <<~"SQL";
         INSERT INTO news 
         (newsbit_title, newsbit, newsbit_URL, newsbit_image_URL, category, `datetime`, newsletter_status, published, image_caption) 
         VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, NOW(), ?, ?, ?)
         SQL
-        my $rows_inserted = $MindMined::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $datetime, $newsletter_status, $published, $image_caption);
+        my $rows_inserted = $MindMined::dbh->do(qq{$sql}, undef, $title, $newsbit, $newsbit_URL, $newsbit_image_URL, $category, $newsletter_status, $published, $image_caption);
         if ( $rows_inserted != 1 ) {
             print STDERR "ERROR: $rows_inserted rows inserted.\n";
         }
