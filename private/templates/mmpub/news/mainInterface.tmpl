@@ -5,91 +5,91 @@
 <font color="red"><TMPL_VAR MESSAGE></font>
 
 <table width="100%" border="0"><tr>
-<td width="40%"><h2>Mind Mined News Publisher 1.3</h2></td>
-<td width="20%">
-<form method="post" action="<TMPL_VAR SCRIPT_NAME>">
-<input type="hidden" name="action" value="refreshNews">
-<input type="submit" value="Refresh News">
-</form>
-</td>
-<td width="36%"></td>
-<td width="4%"> 
-<div align="right"><a href="/private">
-<img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a>
-</div>
-</td>
-</tr>
-</table>
-
-<table width="100%">
-<tr>
-<td align="left"><form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
-Select newsletter to edit...<br>
-<select name="number">
-<TMPL_LOOP NEWSLETTER_OPTIONS>
-    <option value="<TMPL_VAR ISSUE_NUM>"><TMPL_VAR MONTH>, <TMPL_VAR YEAR> (#<TMPL_VAR ISSUE_NUM>)
-</TMPL_LOOP>
-</select>
-<input type="hidden" name="action" value="newsletterInterface">
-<input type="submit" value="Edit Newsletter">
-</form></td>
-<td align="left"><form action="<TMPL_VAR SCRIPT_NAME>" method="post">
-Assemble Newsletter from Pending News<br><select name="month">
-    <option value="January" SELECTED>January
-    <option value="February">February
-    <option value="March">March 
-    <option value="April">April 
-    <option value="May">May 
-    <option value="June">June 
-    <option value="July">July
-    <option value="August">August 
-    <option value="September">September 
-    <option value="October">October
-    <option value="November">November
-    <option value="December">December
-</select>        
-<select name="year">
-    <option value="2003" SELECTED>2003<option value="2004">2004 <option value="2005">2005 
-    <option value="2006">2006<option value="2007">2007 <option value="2008">2008 
-    <option value="2009">2009<option value="2010">2010<option value="2011">2011
-    <option value="2012">2012<option value="2013">2013 <option value="2014">2014 
-    <option value="2015">2015<option value="2016">2016<option value="2017">2017 
-    <option value="2018">2018<option value="2019">2019<option value="2020">2020
-    <option value="2021">2021
-</select> issue #: <input type="text" name="number" size="2"> 
-<input type="hidden" name="action" value="assembleNewsletter">
-<input type="submit" value="Assemble Newsletter"></form></td>
-<td align="right">
-<button onClick="location='<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface';">Add News Item</button>
-</td>
-</tr>
-</table>
-
-<table width="100%">
-<tr bgcolor="#CCCCCC">
-<td><b>Date</b></td>
-<td><b>Title</a></b></td>
-<td><b>Item</a></b></td>
-<td><b>Category</b></td>
-<td align="center"><b>Newsletter Status</b></td>
-<td align="center"><b>Delete</b></td>
-</tr>
-<TMPL_LOOP NEWSBITS>
-    <tr onMouseOver="this.bgColor='#CC9966';" onMouseOut="this.bgColor='<TMPL_VAR BGCOLOR>';" onClick="location='<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface&id=<TMPL_VAR ID>';" bgcolor="<TMPL_VAR BGCOLOR>">
-    <td valign="top"><TMPL_VAR MONTH>.<TMPL_VAR DAY>.<TMPL_VAR YEAR></td>
-    <td valign="top" nowrap><TMPL_VAR TITLE></td>
-    <td valign="top"><TMPL_VAR NEWSBIT ESCAPE=HTML></td>
-    <td valign="top"><TMPL_VAR CATEGORY></td>
-    <td valign="top" align="center">
-    <TMPL_IF PENDING>
-        <img src="/images/email_icon.jpg" alt="in queue for next email newsletter">
-    <TMPL_ELSE>
-        <TMPL_VAR NEWSLETTER_STATUS>
-    </TMPL_IF>
+    <td width="40%"><h2>Mind Mined News Publisher 1.3</h2></td>
+    <td width="20%">
+    <form method="post" action="<TMPL_VAR SCRIPT_NAME>">
+    <input type="hidden" name="action" value="refreshPages">
+    <input type="submit" value="Refresh All News Pages">
+    </form>
     </td>
-    <td valign="top" align="center"><a href="<TMPL_VAR SCRIPT_NAME>?action=deleteNewsbit&id=<TMPL_VAR ID>" onClick="return window.confirm('Delete this newsbit?')"><img src="/images/delete.gif" border="0"></a></td>
+    <td width="36%"></td>
+    <td width="4%"> 
+    <div align="right"><a href="/private">
+    <img src="/images/logo_transparent.gif" alt="Mind Mined Publisher Home" border=0></a>
+    </div>
+    </td>
     </tr>
-</TMPL_LOOP>
+</table>
+
+<table width="100%">
+    <tr>
+    <td align="left"><form action="<TMPL_VAR SCRIPT_NAME>" enctype='multipart/form-data' method="post">
+    Select newsletter to edit...<br>
+    <select name="number">
+    <TMPL_LOOP NEWSLETTER_OPTIONS>
+        <option value="<TMPL_VAR ISSUE_NUM>"><TMPL_VAR MONTH>, <TMPL_VAR YEAR> (#<TMPL_VAR ISSUE_NUM>)
+    </TMPL_LOOP>
+    </select>
+    <input type="hidden" name="action" value="newsletterInterface">
+    <input type="submit" value="Edit Newsletter">
+    </form></td>
+    <td align="left"><form action="<TMPL_VAR SCRIPT_NAME>" method="post">
+    Assemble Newsletter from Pending News<br><select name="month">
+        <option value="January" SELECTED>January
+        <option value="February">February
+        <option value="March">March 
+        <option value="April">April 
+        <option value="May">May 
+        <option value="June">June 
+        <option value="July">July
+        <option value="August">August 
+        <option value="September">September 
+        <option value="October">October
+        <option value="November">November
+        <option value="December">December
+    </select>        
+    <select name="year">
+        <option value="2003" SELECTED>2003<option value="2004">2004 <option value="2005">2005 
+        <option value="2006">2006<option value="2007">2007 <option value="2008">2008 
+        <option value="2009">2009<option value="2010">2010<option value="2011">2011
+        <option value="2012">2012<option value="2013">2013 <option value="2014">2014 
+        <option value="2015">2015<option value="2016">2016<option value="2017">2017 
+        <option value="2018">2018<option value="2019">2019<option value="2020">2020
+        <option value="2021">2021
+    </select> issue #: <input type="text" name="number" size="2"> 
+    <input type="hidden" name="action" value="assembleNewsletter">
+    <input type="submit" value="Assemble Newsletter"></form></td>
+    <td align="right">
+    <button onClick="location='<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface';">Add News Item</button>
+    </td>
+    </tr>
+</table>
+
+<table width="100%">
+    <tr bgcolor="#CCCCCC">
+    <td><b>Date</b></td>
+    <td><b>Title</a></b></td>
+    <td><b>Item</a></b></td>
+    <td><b>Category</b></td>
+    <td align="center"><b>Newsletter Status</b></td>
+    <td align="center"><b>Delete</b></td>
+    </tr>
+    <TMPL_LOOP NEWSBITS>
+        <tr onMouseOver="this.bgColor='#CC9966';" onMouseOut="this.bgColor='<TMPL_VAR BGCOLOR>';" onClick="location='<TMPL_VAR SCRIPT_NAME>?action=newsbitInterface&id=<TMPL_VAR ID>';" bgcolor="<TMPL_VAR BGCOLOR>">
+        <td valign="top"><TMPL_VAR MONTH>.<TMPL_VAR DAY>.<TMPL_VAR YEAR></td>
+        <td valign="top" nowrap><TMPL_VAR TITLE></td>
+        <td valign="top"><TMPL_VAR NEWSBIT ESCAPE=HTML></td>
+        <td valign="top"><TMPL_VAR CATEGORY></td>
+        <td valign="top" align="center">
+        <TMPL_IF PENDING>
+            <img src="/images/email_icon.jpg" alt="in queue for next email newsletter">
+        <TMPL_ELSE>
+            <TMPL_VAR NEWSLETTER_STATUS>
+        </TMPL_IF>
+        </td>
+        <td valign="top" align="center"><a href="<TMPL_VAR SCRIPT_NAME>?action=deleteNewsbit&id=<TMPL_VAR ID>" onClick="return window.confirm('Delete this newsbit?')"><img src="/images/delete.gif" border="0"></a></td>
+        </tr>
+    </TMPL_LOOP>
 </table>
 <br>
 <br>

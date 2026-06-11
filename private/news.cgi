@@ -38,6 +38,7 @@ my %dispatch = (
     refreshIndex        => \&refreshIndex,
     refreshLibraryIndex => \&refreshLibraryIndex,
     refreshNews         => \&refreshNews,
+    refreshPages        => \&refreshPages,
     refreshNewsIndex    => \&refreshNewsIndex,
     saveNewsbit         => \&saveNewsbit,
     saveNewsletter      => \&saveNewsletter,
@@ -492,7 +493,7 @@ Refresh the list of news items at C<news/index.html>.
 =cut
 
 sub refreshNewsIndex {
-    my $template = HTML::Template->new(filename => 'templates/news/index.tmpl');
+    my $t = HTML::Template->new(filename => 'templates/news/index.tmpl');
     my $select = <<~"SQL";
     SELECT newsbit, newsbit_title, newsbit_URL, newsbit_image_URL, image_caption, category, news_categories.url, 
     news_categories.icon_image_url, datetime, MONTHNAME(`datetime`), published
@@ -540,12 +541,22 @@ sub refreshNewsIndex {
         print FINAL "$output";
         close FINAL;
     }
-    $template->param(NEWSBITS => \@newsbits);
-    $template->param(SHOW_EDITOR_LINK => 1);
-    my $output = $template->output;
+    $t->param(NEWSBITS => \@newsbits);
+    $t->param(SHOW_EDITOR_LINK => 1);
+    my $output = $t->output;
     open(FINAL, ">:encoding(utf8)", "$ENV{DOCUMENT_ROOT}/news/index.html") or die $!;
     print FINAL "$output";
     close FINAL;
+}
+
+=head2 refreshPages
+
+Call L<refreshNews()> and return to the main News publisher view.
+
+=cut
+
+sub refreshPages {
+    mainInterface( refreshNews() );
 }
 
 =head2 saveNewsbit()
