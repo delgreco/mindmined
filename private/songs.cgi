@@ -41,7 +41,7 @@ exit;
 
 =head2 addToSongBook
 
-TODO
+Given a C<song_id> and a C<songbook_id>, add the song to the songbook.
 
 =cut
 
@@ -49,8 +49,6 @@ sub addToSongBook {
     my $song_id=$cgi->param('song_id');
     my $songbook_id=$cgi->param('songbook_id');
     my $message;
-    #my $song_id = $_[0];
-    #my $songbook_id = $_[1];
     # make sure it's not already there for some strange reason
     my $select = <<~"SQL";
     SELECT song_id 
@@ -62,7 +60,7 @@ sub addToSongBook {
     $sth->execute($song_id, $songbook_id);
     my ($id) = $sth->fetchrow_array();
     # unless this song/songbook association already exists, add it
-    unless ($id) {
+    unless ( $id ) {
         my $insert="INSERT INTO songs_songbooks (song_id, songbook_id) VALUES (?, ?)";
         my $sth = $MindMined::dbh->prepare($insert);
         $sth->execute($song_id, $songbook_id);
@@ -93,18 +91,19 @@ sub adjustFrequency {
     my $id=$cgi->param("id"); 
     my $setlist=$cgi->param("setlist"); 
     my $songbook_id=$cgi->param("songbook_id"); 
-    if ($id =~ /^\+/) {
+    my $message;
+    if ( $id =~ /^\+/ ) {
         $id =~ s/\+//;
-        _upgradeSong($id, $setlist, $songbook_id);
+        $message = _upgradeSong($id, $songbook_id);
     }
-    elsif ($id =~ /^\-/) {
+    elsif ( $id =~ /^\-/ ) {
         $id =~ s/\-//;
-        _downgradeSong($id, $setlist, $songbook_id);
+        $message = _downgradeSong($id, $songbook_id);
     }
     else {
-        my $message = qq {Select a radio button in order to adjust the frequency of a setlist song.};
-        setlist($setlist, $message);
+        $message = 'Select a radio button in order to adjust the frequency of a setlist song.';
     }
+    setlist($setlist, $message);
 }
 
 =head2 deleteSong
@@ -461,9 +460,7 @@ sub songbook {
         filename => 'templates/songs/songbook.tmpl'
     );
     my $select = <<~"SQL";
-    SELECT name 
-    FROM songbooks 
-    WHERE id = ?
+    SELECT name FROM songbooks WHERE id = ?
     SQL
     my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($id);
@@ -525,17 +522,16 @@ TODO
 
 sub _downgradeSong {
     my $song_id = $_[0]; 
-    my $setlist = $_[1]; 
-    my $songbook_id = $_[2];
+    my $songbook_id = $_[1];
     my $delete="DELETE FROM song_frequency 
-    WHERE song_id = '$song_id' 
-    AND songbook_id = '$songbook_id'
+    WHERE song_id = ?
+    AND songbook_id = ?
     LIMIT 1";
     my $sth = $MindMined::dbh->prepare($delete);
-    $sth->execute() || die "sth->execute($delete): $DBI::errstr\n";
+    $sth->execute($song_id, $songbook_id) || die "sth->execute($delete): $DBI::errstr\n";
     $sth->finish();
-    my $message = qq {Song has been downgraded.};
-    setlistInterface($setlist, $message);
+    my $message = 'Song has been downgraded.';
+    return $message;
 }
 
 =head2 _getAddSongsDropdown
@@ -545,7 +541,7 @@ TODO
 =cut
 
 sub _getAddSongsDropdown {
-    my $template = $_[0];
+    my $t = $_[0];
     my $songbook_id = $_[1];  # when passing a songbook id,
     # we are telling this sub that we want the songs that DON'T
     # appear in this songbook yet, so they can be added via this dropdown
@@ -567,8 +563,8 @@ sub _getAddSongsDropdown {
         $row{ID} = $id;
         push(@songs, \%row);
     }
-    $template->param(SONGS_OPTIONS => \@songs);
-    return $template;
+    $t->param(SONGS_OPTIONS => \@songs);
+    return $t;
 }
 
 =head2 _getSongBookDropdown
@@ -578,7 +574,7 @@ TODO
 =cut
 
 sub _getSongBookDropdown {
-    my $template = $_[0];
+    my $t = $_[0];
     my $songbook_id = $_[1];
     my $select = <<~"SQL";
     SELECT name, id 
@@ -597,8 +593,8 @@ sub _getSongBookDropdown {
         $row{ID} = $id;
         push(@songbooks, \%row);
     }
-    $template->param(SONGBOOKS => \@songbooks);
-    return $template;
+    $t->param(SONGBOOKS => \@songbooks);
+    return $t;
 }
 
 =head2 _getSongBookName
@@ -610,13 +606,10 @@ TODO
 sub _getSongBookName {
     my $songbook_id = $_[0];
     my $select = <<~"SQL";
-    SELECT name
-    FROM songbooks
-    WHERE id = ?
+    SELECT name FROM songbooks WHERE id = ?
     SQL
     my $sth = $MindMined::dbh->prepare($select);
     $sth->execute($songbook_id);
-    my @songs;
     my ($name) = $sth->fetchrow_array();
     return $name;
 }
@@ -678,20 +671,19 @@ sub _getToday {
 
 =head2 _upgradeSong
 
-TODO
+Given a C<song_id>, and a C<songbook_id>, upgrade the frequency for that song to be included in generated setlists from that songbook.
 
 =cut
 
 sub _upgradeSong {
     my $song_id = $_[0];
-    my $setlist = $_[1];
-    my $songbook_id = $_[2];
+    my $songbook_id = $_[1];
     my $insert="INSERT INTO song_frequency (song_id, songbook_id) VALUES (?, ?)";
     my $sth = $MindMined::dbh->prepare($insert);
     $sth->execute($song_id, $songbook_id);
     $sth->finish();
-    my $message = qq {Song has been upgraded.};
-    setlistInterface($setlist, $message);
+    my $message = 'Song has been upgraded.';
+    return $message;
 }
 
 =head1 AUTHORS
